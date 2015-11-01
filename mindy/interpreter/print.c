@@ -190,7 +190,7 @@ static obj_t dylan_putc(obj_t obj)
 
 static obj_t dylan_puts(obj_t obj)
 {
-  fputs((const char*)string_chars(obj), stdout);
+  fputs(string_chars(obj), stdout);
   return obj;
 }
 
@@ -202,7 +202,7 @@ static void dylan_format(struct thread* thread, int nargs)
 
   push_linkage(thread, args);
   check_type(fmt, obj_ByteStringClass);
-  vformat((const char*)string_chars(fmt), args+1, nargs-1);
+  vformat(string_chars(fmt), args+1, nargs-1);
   old_sp = pop_linkage(thread);
   thread->sp = old_sp;
   do_return(thread, old_sp, old_sp);
@@ -284,7 +284,7 @@ void vformat(const char *fmt, obj_t *args, int nargs)
                     dylan_puts(*args++);
                 }
                 else if (instancep(*args, obj_SymbolClass)) {
-                    fputs((const char *)sym_name(*args++), stdout);
+                    fputs(sym_name(*args++), stdout);
                 }
                 /* Can't print conditions, because they are defined in */
                 /* dylan. */

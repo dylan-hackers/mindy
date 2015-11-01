@@ -95,7 +95,7 @@ struct string_literal {
     struct literal *next;
     int line;
     int length;
-    unsigned char chars[4];
+    char chars[4];
 };
 
 struct vector_literal {

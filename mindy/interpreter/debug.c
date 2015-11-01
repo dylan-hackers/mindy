@@ -404,7 +404,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
         return NULL;
 
     if (file != cur_source_file) {
-        const char *name = (const char *)string_chars(file);
+        const char *name = string_chars(file);
 
         if (cur_source_stream != NULL) {
             fclose(cur_source_stream);
@@ -470,7 +470,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
 static void explain_condition(struct thread *thread, obj_t condition)
 {
     if (instancep(condition, obj_SimpleObjectVectorClass)) {
-        const char *fmt = (const char *)string_chars(SOVEC(condition)->contents[0]);
+        const char *fmt = string_chars(SOVEC(condition)->contents[0]);
 
         putchar('\n');
         vformat(fmt, SOVEC(condition)->contents+1, SOVEC(condition)->length-1);
@@ -673,7 +673,7 @@ static int get_name(obj_t obj, const char **name)
         return 1;
     }
     if (get_string(obj, &named)) {
-        *name = (const char *)string_chars(named);
+        *name = string_chars(named);
         return 1;
     }
     return 0;

@@ -276,7 +276,7 @@ static obj_t format_entry_origin( struct entry *entry)
     len += strlen( safe_sym_name( entry->p2));
     len += strlen( safe_sym_name( entry->p3));
     origin = alloc_byte_string(len);
-    sprintf( (char *) string_chars(origin),
+    sprintf(string_chars(origin),
             entry->template, safe_sym_name(entry->p1),
             safe_sym_name(entry->p2), safe_sym_name(entry->p3));
     return origin;
@@ -311,16 +311,16 @@ static void make_entry(struct table *table, obj_t name, void *datum,
 
 static obj_t prepend_prefix(obj_t name, struct use *use)
 {
-    const char *prefix;
+    struct string *prefix;
     char *local_name;
     obj_t res;
 
     if (use->prefix == obj_False)
         return name;
 
-    prefix = (const char *)obj_ptr(struct string *, use->prefix)->chars;
-    local_name = (char *)malloc(strlen(prefix) + strlen(sym_name(name)) + 1);
-    strcpy(local_name, prefix);
+    prefix = obj_ptr(struct string *, use->prefix);
+    local_name = (char *)malloc(prefix->len + strlen(sym_name(name)) + 1);
+    strcpy(local_name, prefix->chars);
     strcat(local_name, sym_name(name));
     res = symbol(local_name);
     free(local_name);

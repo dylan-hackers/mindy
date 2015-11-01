@@ -301,9 +301,9 @@ dylan_headers:
 
 header_list:
         HEADER_KEY HEADER_VAL
-        { process_header((char *)$1->chars, (char *)$2->chars); free($1); free($2); }
+        { process_header($1->chars, $2->chars); free($1); free($2); }
     | header_list HEADER_KEY HEADER_VAL
-        { process_header((char *)$2->chars, (char *)$3->chars); free($2); free($3); }
+        { process_header($2->chars, $3->chars); free($2); free($3); }
 ;
 
 dylan_program:
@@ -1109,7 +1109,7 @@ keyword_parameter_default:
 module_definition:
         variable_name module_clauses_opt END module_opt symbol_opt
         { if ($5) {
-              if (strcasecmp((char *)$1->chars, (char *)$5->chars) != 0) {
+              if (strcasecmp($1->chars, $5->chars) != 0) {
                   error($5->line, "mismatched name, ``%s'' isn't ``%s''",
                         $5->chars, $1->chars);
                   yacc_recover();
@@ -1245,7 +1245,7 @@ variable_names:
 library_definition:
         variable_name library_clauses_opt END library_opt symbol_opt
         { if ($5) {
-              if (strcasecmp((char *)$1->chars, (char *)$5->chars) != 0) {
+              if (strcasecmp($1->chars, $5->chars) != 0) {
                   error($5->line, "mismatched name, ``%s'' isn't ``%s''",
                         $5->chars, $1->chars);
                   yacc_recover();
@@ -1322,12 +1322,12 @@ static bool verify_symbol_aux(struct id *id, struct token *token)
 {
     if (token) {
         int line = token->line;
-        char *ptr = (char *)token->chars;
+        char *ptr = token->chars;
 
         if (*ptr == '\\')
             ptr++;
 
-        if (strcasecmp((char *)id->symbol->name, ptr)) {
+        if (strcasecmp(id->symbol->name, ptr)) {
             error(line, "mismatched name, ``%s'' isn't ``%s''",
                   token->chars, id->symbol->name);
             free(token);

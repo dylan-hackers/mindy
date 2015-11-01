@@ -95,7 +95,7 @@ obj_t load_c_file(obj_t /* list */ c_files, obj_t /* list */ names)
     ret = obj_ptr(struct shared_file *, retval);
     ret->file_count = length(c_files);
     for (i = 0; c_files != obj_Nil; i++, c_files = TAIL(c_files)) {
-        handle = shl_load((const char*)string_chars(HEAD(c_files)));
+        handle = shl_load(string_chars(HEAD(c_files)));
         if (handle == NULL) {
             error("Can't load shared library %s.", HEAD(c_files));
         };
@@ -147,7 +147,7 @@ static void print_c_pointer(obj_t ptr)
    callable "<c-function>" object for it. */
 obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
 {
-    const char *string = (const char *)string_chars(symbol);
+    const char *string = string_chars(symbol);
     struct symtab *syms;
     int sym_count, i;
     obj_t retval = obj_False;
@@ -187,7 +187,7 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
    "<c-pointer>" object for it. */
 obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
 {
-    const char *string = (const char *)string_chars(symbol);
+    const char *string = string_chars(symbol);
     struct symtab *syms;
     int sym_count, i;
     obj_t retval = obj_False;

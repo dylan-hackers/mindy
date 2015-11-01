@@ -441,13 +441,13 @@ static obj_t fop_string(struct load_info *info)
 
 static obj_t fop_short_symbol(struct load_info *info)
 {
-    return store(info, symbol((const char *)string_chars(fop_short_string(info))),
+    return store(info, symbol(string_chars(fop_short_string(info))),
                  next_handle(info));
 }
 
 static obj_t fop_symbol(struct load_info *info)
 {
-    return store(info, symbol((const char *)string_chars(fop_string(info))),
+    return store(info, symbol(string_chars(fop_string(info))),
                  next_handle(info));
 }
 
@@ -1173,7 +1173,7 @@ static void dylan_load(obj_t self, struct thread *thread, obj_t *args)
 
     push_linkage(thread, args);
 
-    load((char *)string_chars(name));
+    load(string_chars(name));
 
     thread->sp = pop_linkage(thread);
     load_do_inits(thread);

@@ -127,7 +127,7 @@ static void print_string_literal(struct string_literal *l, int depth)
     int i;
 
     printf("%sstring \"", indent(depth));
-    ptr = (char *)l->chars;
+    ptr = l->chars;
     for (i = 0; i < l->length; i++)
         print_char(*ptr++, '"');
     printf("\"\n");
@@ -284,9 +284,9 @@ static const char *debug_name_string(struct literal *literal)
 {
     switch (literal->kind) {
       case literal_SYMBOL:
-        return (const char *)((struct symbol_literal *)literal)->symbol->name;
+        return ((struct symbol_literal *)literal)->symbol->name;
       case literal_STRING:
-        return (const char *)((struct string_literal *)literal)->chars;
+        return ((struct string_literal *)literal)->chars;
       default:
         return "with strange debug name";
     }

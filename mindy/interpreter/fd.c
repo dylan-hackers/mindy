@@ -327,7 +327,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
         SECURITY_ATTRIBUTES saAttr;
         int inpipes[2], outpipes[2];
         HANDLE old_handles[2];
-        const char *command_line = (const char *) string_chars(args[0]);
+        const char *command_line = string_chars(args[0]);
 
         siStartInfo.cb = sizeof(STARTUPINFO);
         siStartInfo.lpReserved = NULL;
@@ -418,7 +418,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
             /* This process is going to exit shortly, so we needn't be too
                careful about malloc behavior, nor about the fact that we
                destructively modify the command string. */
-            char *command = (char *)string_chars(args[0]);
+            char *command = string_chars(args[0]);
             char *p, **args;
             int argcounter = 1;
 
@@ -533,8 +533,7 @@ static void fd_open(obj_t self, struct thread *thread, obj_t *args)
     obj_t flags = args[1];
     int res;
 
-    res = mindy_open((char *)string_chars(path), fixnum_value(flags),
-                     0666);
+    res = mindy_open(string_chars(path), fixnum_value(flags), 0666);
 
     results(thread, args-1, res, make_fixnum(res));
 }
@@ -656,7 +655,7 @@ static obj_t file_write_date(obj_t path)
 {
     struct stat buf;
 
-    if (stat((char *)string_chars(path), &buf) < 0)
+    if (stat(string_chars(path), &buf) < 0)
         return obj_False;
     else
         return make_fixnum(buf.st_mtime);

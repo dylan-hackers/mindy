@@ -158,12 +158,12 @@ static obj_t dylan_get_time_of_day (void)
 
 static obj_t dylan_system(obj_t command)
 {
-    return make_fixnum(system((char *)string_chars(command)));
+    return make_fixnum(system(string_chars(command)));
 }
 
 static obj_t dylan_getenv(obj_t name)
 {
-    const char *res = getenv((const char *)string_chars(name));
+    const char *res = getenv(string_chars(name));
 
     if (res)
         return make_byte_string(res);

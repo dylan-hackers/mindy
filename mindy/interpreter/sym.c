@@ -137,7 +137,7 @@ obj_t symbol(const char *name)
          sym != obj_False;
          sym = SYMBOL(sym)->next) {
         if (SYMBOL(sym)->hash == hash) {
-            if (same_name(name, (char *) string_chars(SYMBOL(sym)->name)))
+            if (same_name(name, string_chars(SYMBOL(sym)->name)))
                 return sym;
         }
     }
@@ -157,7 +157,7 @@ obj_t symbol(const char *name)
 
 const char *sym_name(obj_t sym)
 {
-    return (const char *)string_chars(SYMBOL(sym)->name);
+    return string_chars(SYMBOL(sym)->name);
 }
 
 unsigned sym_hash(obj_t sym)
@@ -173,7 +173,7 @@ unsigned sym_hash(obj_t sym)
 
 static obj_t string_as_symbol(obj_t class, obj_t string)
 {
-    return symbol((char *)obj_ptr(struct string *, string)->chars);
+    return symbol(string_chars(string));
 }
 
 static obj_t symbol_as_string(obj_t class, obj_t symbol)

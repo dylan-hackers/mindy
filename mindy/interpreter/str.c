@@ -60,7 +60,7 @@ obj_t make_byte_string(const char *chars)
                       + len + 1 - sizeof(((struct string *)res)->chars));
 
     obj_ptr(struct string *, res)->len = len;
-    strcpy((char *)obj_ptr(struct string *, res)->chars, chars);
+    strcpy(obj_ptr(struct string *, res)->chars, chars);
 
     return res;
 }
@@ -160,7 +160,7 @@ static obj_t dylan_byte_str_equal(obj_t /* <byte-string> */ str1,
     struct string *s1 = obj_ptr(struct string *, str1);
     struct string *s2 = obj_ptr(struct string *, str2);
 
-    if ((s1->len == s2->len) && (strcmp((char *)s1->chars, (char *)s2->chars) == 0))
+    if ((s1->len == s2->len) && (strcmp(s1->chars, s2->chars) == 0))
         return obj_True;
     else
         return obj_False;
@@ -170,7 +170,7 @@ static obj_t dylan_byte_str_make(obj_t class, obj_t size, obj_t fill)
 {
     obj_t res;
     int len;
-    unsigned char *ptr;
+    char *ptr;
     int fill_char;
 
     len = fixnum_value(check_type(size, obj_FixnumClass));
@@ -222,7 +222,7 @@ static obj_t dylan_unicode_str_make(obj_t class, obj_t size, obj_t fill)
 static void print_byte_string(obj_t str)
 {
     int len = obj_ptr(struct string *, str)->len;
-    unsigned char *ptr = string_chars(str);
+    const char *ptr = string_chars(str);
 
     putchar('"');
     while (len-- > 0) {

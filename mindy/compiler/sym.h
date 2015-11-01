@@ -32,7 +32,7 @@ struct symbol {
     unsigned hash;
     struct symbol *next;
     int handle;
-    const unsigned char name[1];
+    char name[1];
 };
 
 extern struct symbol *symbol(const char *name);

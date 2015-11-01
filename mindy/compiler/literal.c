@@ -83,7 +83,7 @@ struct literal *make_string_literal(const char *str)
     res->line = 0;
     res->length = len;
 
-    strcpy((char *)res->chars, str);
+    strcpy(res->chars, str);
 
     return (struct literal *)res;
 }

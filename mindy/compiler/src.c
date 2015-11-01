@@ -348,7 +348,7 @@ struct id *dup_id(struct id *id)
 
 struct id *make_id(struct token *token)
 {
-    const char *ptr = (const char *)token->chars;
+    const char *ptr = token->chars;
     struct id *res;
 
     if (*ptr == '\\')
@@ -454,7 +454,7 @@ struct keyword_param
     if (key) {
         /* The keyword token has a trailing : */
         key->chars[key->length-1] = '\0';
-        res->keyword = symbol((char *)key->chars);
+        res->keyword = symbol(key->chars);
         free(key);
     }
     else
@@ -708,7 +708,7 @@ struct plist
     key->chars[key->length-1] = '\0';
 
     prop->line = key->line;
-    prop->keyword = symbol((char *)key->chars);
+    prop->keyword = symbol(key->chars);
     prop->expr = expr;
     prop->next = NULL;
 
@@ -829,7 +829,7 @@ struct literal *parse_string_token(struct token *token)
     int i;
     char *src, *dst;
 
-    src = (char *)token->chars + 1;
+    src = token->chars + 1;
     for (i = length; i > 0; i--) {
         if (*src++ == '\\') {
             length--, i--;
@@ -850,8 +850,8 @@ struct literal *parse_string_token(struct token *token)
     res->line = token->line;
     res->length = length;
 
-    src = (char *)token->chars + 1;
-    dst = (char *)res->chars;
+    src = token->chars + 1;
+    dst = res->chars;
     for (i = length; i > 0; i--) {
         int c = *src++;
         if (c == '\\')
@@ -871,7 +871,7 @@ struct literal
 {
     struct string_literal *old = (struct string_literal *)old_literal;
     int old_length = old->length;
-    char *old_string = (char *)old->chars;
+    char *old_string = old->chars;
     struct string_literal *res;
     int length = token->length - 2;
     int i;
@@ -884,9 +884,9 @@ struct literal
     res->next = NULL;
     res->line = old_literal->line;
 
-    strncpy((char *)res->chars, old_string, old_length);
-    src = (char *)token->chars + 1;
-    dst = (char *)res->chars + old_length;
+    strncpy(res->chars, old_string, old_length);
+    src = token->chars + 1;
+    dst = res->chars + old_length;
     for (i = 0; i < length; i++) {
         int c = *src++;
         if (c == '\\') {
@@ -910,7 +910,7 @@ struct literal *parse_character_token(struct token *token)
     struct literal *res;
 
     if (c == '\\') {
-        char *cp = (char *)&token->chars[2];
+        char *cp = &token->chars[2];
         c = escape_char(&cp, token->line);
     }
 
@@ -931,7 +931,7 @@ struct literal *parse_integer_token(struct token *token)
     char *remnant;
     struct literal *res;
 
-    ptr = (char *)token->chars;
+    ptr = token->chars;
     if (*ptr == '#') {
         switch (ptr[1]) {
           case 'X': case 'x': radix = 16; break;
@@ -979,7 +979,7 @@ struct literal *parse_integer_token(struct token *token)
 
 struct literal *parse_float_token(struct token *token)
 {
-    unsigned char c, *ptr, *remnant;
+    char c, *ptr, *remnant;
     enum literal_kind kind = literal_SINGLE_FLOAT;
     struct literal *res = NULL;
 
@@ -1007,21 +1007,21 @@ struct literal *parse_float_token(struct token *token)
         {
             struct single_float_literal *r = malloc(sizeof(*r));
             res = (struct literal *)r;
-            r->value = strtod((char *)token->chars, (char **)&remnant);
+            r->value = strtod(token->chars, &remnant);
             break;
         }
       case literal_DOUBLE_FLOAT:
         {
             struct double_float_literal *r = malloc(sizeof(*r));
             res = (struct literal *)r;
-            r->value = strtod((char *)token->chars, (char **)&remnant);
+            r->value = strtod(token->chars, &remnant);
             break;
         }
       case literal_EXTENDED_FLOAT:
         {
             struct extended_float_literal *r = malloc(sizeof(*r));
             res = (struct literal *)r;
-            r->value = strtod((char *)token->chars, (char **)&remnant);
+            r->value = strtod(token->chars, &remnant);
             break;
         }
       default:
@@ -1050,7 +1050,7 @@ struct literal *parse_float_token(struct token *token)
 
 struct literal *parse_symbol_token(struct token *token)
 {
-    char *ptr = (char *)token->chars;
+    char *ptr = token->chars;
     struct literal *res;
 
     /* We modify the token here, but we don't care 'cause we will be */
@@ -1070,7 +1070,7 @@ struct literal *parse_symbol_token(struct token *token)
 
 struct literal *parse_keyword_token(struct token *token)
 {
-    char *ptr = (char *)token->chars, *p = NULL;
+    char *ptr = token->chars, *p = NULL;
     struct literal *res;
 
     /* We modify the token here, but we don't care 'cause we will be */
@@ -1663,7 +1663,7 @@ struct initarg_spec
     key->chars[key->length-1] = '\0';
 
     res->required = required;
-    res->keyword = symbol((char *)key->chars);
+    res->keyword = symbol(key->chars);
     res->plist = plist;
     res->next = NULL;
 

@@ -40,7 +40,7 @@ extern obj_t obj_UnicodeStringClass;
 struct string {
     obj_t /* class */ class;
     int len;
-    unsigned char chars[4];
+    char chars[4];
 };
 
 /* How you interpret the chars depends on whether its a byte string or

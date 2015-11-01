@@ -160,7 +160,7 @@ static struct symbol *intern(const char *name, struct table *table)
     struct symbol *id;
 
     for (id = table->table[index]; id != NULL; id = id->next)
-        if (id->hash == hash && same_name(name, (const char *)id->name))
+        if (id->hash == hash && same_name(name, id->name))
             return id;
 
     id = malloc(sizeof(struct symbol) + strlen(name) + 1);
@@ -168,7 +168,7 @@ static struct symbol *intern(const char *name, struct table *table)
     id->next = table->table[index];
     id->handle = -1;
     table->table[index] = id;
-    strcpy((char *)id->name, name);
+    strcpy(id->name, name);
 
     table->entries++;
     if (table->entries >= table->threshold)
@@ -193,7 +193,7 @@ struct symbol *gensym(void)
     res->hash = (unsigned long)res;
     res->next = NULL;
     res->handle = -1;
-    sprintf((char *)res->name, "g%d", counter++);
+    sprintf(res->name, "g%d", counter++);
 
     if (counter == rollover) {
         digits++;

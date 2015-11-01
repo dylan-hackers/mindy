@@ -120,9 +120,9 @@ static bool parse_feature_word(void)
     struct symbol *sym;
 
     if (yylval.token->chars[0] == '\\')
-        sym = symbol((char *)yylval.token->chars + 1);
+        sym = symbol(yylval.token->chars + 1);
     else
-        sym = symbol((char *)yylval.token->chars);
+        sym = symbol(yylval.token->chars);
 
     new_token();
 

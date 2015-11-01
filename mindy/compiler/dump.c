@@ -156,8 +156,8 @@ static void dump_symbol(struct symbol *symbol)
         dump_ref(symbol->handle);
     else {
         symbol->handle = implicit_store();
-        dump_string_guts(fop_SHORT_SYMBOL, fop_SYMBOL, (const char *)symbol->name,
-                         strlen((const char *)symbol->name));
+        dump_string_guts(fop_SHORT_SYMBOL, fop_SYMBOL, symbol->name,
+                         strlen(symbol->name));
     }
 }
 
@@ -200,7 +200,7 @@ static void dump_character_literal(struct character_literal *literal)
 
 static void dump_string_literal(struct string_literal *literal)
 {
-    dump_string_guts(fop_SHORT_STRING, fop_STRING, (const char *)literal->chars,
+    dump_string_guts(fop_SHORT_STRING, fop_STRING, literal->chars,
                      literal->length);
 }
 

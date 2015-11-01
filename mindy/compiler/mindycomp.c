@@ -122,7 +122,7 @@ static void set_module(const char *value)
 
 static void set_library(const char *value)
 {
-    if (LibraryName != NULL && strcasecmp((char *)LibraryName->name, value)) {
+    if (LibraryName != NULL && strcasecmp(LibraryName->name, value)) {
         fprintf(stderr,
                 "Library name specified on the command line differs from\n"
                 "the library name specified in the file.\n");
