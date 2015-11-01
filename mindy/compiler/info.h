@@ -38,7 +38,7 @@ struct function_info {
 
 extern struct binop_info *lookup_binop_info(struct id *id);
 
-extern struct function_info
-    *lookup_function_info(struct id *id, bool createp);
+extern struct function_info *
+lookup_function_info(struct id *id, bool createp);
 
 extern void init_info(void);

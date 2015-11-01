@@ -23,80 +23,80 @@
 
 #define MINDYCOMP "mindycomp"
 
-int main(argc, argv) int argc; char *argv[];
+int main(argc, argv) int argc;
+char *argv[];
 {
-  int fd[2], pid;
-  char *source;
+    int fd[2], pid;
+    char *source;
 
-  pipe(fd);
+    pipe(fd);
 
-  if (pipe(fd) != 0) {
-    fprintf(stderr, "mindyexec: pipe failed: %s\n", strerror(errno));
-    exit(1);
-  }
+    if (pipe(fd) != 0) {
+        fprintf(stderr, "mindyexec: pipe failed: %s\n", strerror(errno));
+        exit(1);
+    }
 
-  pid = fork();
+    pid = fork();
 
-  if (pid < 0) {
-    fprintf(stderr, "mindyexec: fork failed: %s\n", strerror(errno));
-    exit(1);
-  }
+    if (pid < 0) {
+        fprintf(stderr, "mindyexec: fork failed: %s\n", strerror(errno));
+        exit(1);
+    }
 
-  if (argc < 2)
-    source = "-";                        /* compile from standard input */
-  else
-    source = argv[1];                        /* compile from script */
+    if (argc < 2)
+        source = "-"; /* compile from standard input */
+    else
+        source = argv[1]; /* compile from script */
 
-  if (pid == 0) {
-    static char *nargv[] = {
-      MINDYCOMP,                        /* compile */
-      "source-script",                        /* <source name here> */
-      "-q",                                /* no warnings */
-      "-o",                                /* output to */
-      "-",                                /* stdout */
-      NULL
-    };
+    if (pid == 0) {
+        static char *nargv[] = {
+            MINDYCOMP, /* compile */
+            "source-script", /* <source name here> */
+            "-q", /* no warnings */
+            "-o", /* output to */
+            "-", /* stdout */
+            NULL
+        };
 
-    nargv[1] = source;
+        nargv[1] = source;
 
-    close(1);
-    dup(fd[1]);
-    close(fd[0]);
-    close(fd[1]);
+        close(1);
+        dup(fd[1]);
+        close(fd[0]);
+        close(fd[1]);
 
-    execvp(MINDYCOMP, nargv);
+        execvp(MINDYCOMP, nargv);
 
-    fprintf(stderr, "mindyexec: execvp(\"%s\", ...) failed: %s\n", MINDYCOMP,
-            strerror(errno));
-    exit(1);
-  }
+        fprintf(stderr, "mindyexec: execvp(\"%s\", ...) failed: %s\n", MINDYCOMP,
+                strerror(errno));
+        exit(1);
+    }
 
-  if (pid > 0) {
-    char **nargv = malloc((argc+4+1) * sizeof(char *));
-    int nargc, oargc;
+    if (pid > 0) {
+        char **nargv = malloc((argc + 4 + 1) * sizeof(char *));
+        int nargc, oargc;
 
-    nargc = 0;
-    nargv[nargc++] = "mindy";                /* interpret */
-#if ! NO_ARGV_0
-    nargv[nargc++] = "-0";                /* command name is */
-    nargv[nargc++] = source;                /* source file */
+        nargc = 0;
+        nargv[nargc++] = "mindy"; /* interpret */
+#if !NO_ARGV_0
+        nargv[nargc++] = "-0"; /* command name is */
+        nargv[nargc++] = source; /* source file */
 #endif
-    nargv[nargc++] = "-x";                /* last file to load is */
-    nargv[nargc++] = "-";                /* stdin */
-    for (oargc = 2; oargc < argc; )
-      nargv[nargc++] = argv[oargc++];        /* rest of args for main() */
-    nargv[nargc] = NULL;
+        nargv[nargc++] = "-x"; /* last file to load is */
+        nargv[nargc++] = "-"; /* stdin */
+        for (oargc = 2; oargc < argc;)
+            nargv[nargc++] = argv[oargc++]; /* rest of args for main() */
+        nargv[nargc] = NULL;
 
-    close(0);
-    dup(fd[0]);
-    close(fd[0]);
-    close(fd[1]);
+        close(0);
+        dup(fd[0]);
+        close(fd[0]);
+        close(fd[1]);
 
-    execvp("mindy", nargv);
+        execvp("mindy", nargv);
 
-    fprintf(stderr, "mindyexec: execvp(\"mindy\", ...) failed:%s\n", strerror(errno));
-    exit(1);
-  }
-  return 0;
+        fprintf(stderr, "mindyexec: execvp(\"mindy\", ...) failed:%s\n", strerror(errno));
+        exit(1);
+    }
+    return 0;
 }
-

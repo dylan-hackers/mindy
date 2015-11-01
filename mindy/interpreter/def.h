@@ -39,4 +39,3 @@ extern void define_method(char *name, obj_t specializers, bool restp,
                           obj_t keywords, bool all_keys, obj_t result_type,
                           obj_t (*func)());
 extern void define_class(char *name, obj_t class);
-

@@ -37,8 +37,8 @@
 extern char *current_file;
 extern bool GiveWarnings;
 
-extern void error (int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
-extern void warn (int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
+extern void error(int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
+extern void warn(int line, char *msg, ...) MINDY_FORMATLIKE(2, 3);
 
 extern struct symbol *ModuleName;
 extern struct symbol *LibraryName;
@@ -46,20 +46,20 @@ extern struct symbol *LibraryName;
 /* Don't call check_malloc yourself, always use the malloc macro.
  * Also, try to keep this section consistent with interpreter/mindy.h
  */
-void *check_malloc(size_t, const char*, int);
+void *check_malloc(size_t, const char *, int);
 #ifdef malloc
 #undef malloc
 #endif
 #define malloc(sz) check_malloc(sz, __FILE__, __LINE__)
 
-void *check_calloc(size_t, size_t, const char*, int);
+void *check_calloc(size_t, size_t, const char *, int);
 #ifdef calloc
 #undef calloc
 #endif
-#define calloc(nobj,sz) check_calloc(nobj, sz, __FILE__, __LINE__)
+#define calloc(nobj, sz) check_calloc(nobj, sz, __FILE__, __LINE__)
 
-void *check_realloc(void*, size_t, const char*, int);
+void *check_realloc(void *, size_t, const char *, int);
 #ifdef realloc
 #undef realloc
 #endif
-#define realloc(ptr,sz) check_realloc(ptr, sz, __FILE__, __LINE__)
+#define realloc(ptr, sz) check_realloc(ptr, sz, __FILE__, __LINE__)

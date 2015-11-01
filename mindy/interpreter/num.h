@@ -26,10 +26,10 @@
 \**********************************************************************/
 
 #define obj_is_fixnum(o) (!obj_is_ptr(o))
-#define fixnum_value(o) (((long)(o))>>1)
-#define make_fixnum(i) ((obj_t)(((long)(i))<<1))
-#define MAX_FIXNUM ((obj_t)((((unsigned long)~0)<<2)>>1))
-#define MIN_FIXNUM ((obj_t)~(((unsigned long)~0)>>1))
+#define fixnum_value(o) (((long)(o)) >> 1)
+#define make_fixnum(i) ((obj_t)(((long)(i)) << 1))
+#define MAX_FIXNUM ((obj_t)((((unsigned long)~0) << 2) >> 1))
+#define MIN_FIXNUM ((obj_t) ~(((unsigned long)~0) >> 1))
 
 typedef unsigned char digit_t;
 
@@ -42,7 +42,7 @@ struct bignum {
 #define BIGNUM(o) obj_ptr(struct bignum *, o)
 
 extern obj_t make_bignum(long value);
-#define as_bignum(i) (obj_is_fixnum(i)?make_bignum(fixnum_value(i)):(i))
+#define as_bignum(i) (obj_is_fixnum(i) ? make_bignum(fixnum_value(i)) : (i))
 extern long bignum_value(obj_t x);
 extern int compare_bignums(obj_t x, obj_t y);
 extern obj_t add_bignums(obj_t x, obj_t y);

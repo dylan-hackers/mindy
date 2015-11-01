@@ -28,15 +28,15 @@
 #define MINDY_SHARED_COLOR_OUTPUT_H
 
 enum MindyColor {
-  MindyBlack = 0,
-  MindyRed,
-  MindyGreen,
-  MindyYellow,
-  MindyBlue,
-  MindyMagenta,
-  MindyCyan,
-  MindyWhite,
-  MindyDefault
+    MindyBlack = 0,
+    MindyRed,
+    MindyGreen,
+    MindyYellow,
+    MindyBlue,
+    MindyMagenta,
+    MindyCyan,
+    MindyWhite,
+    MindyDefault
 };
 
 void init_color(bool force_color);

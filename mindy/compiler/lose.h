@@ -27,4 +27,4 @@
 
 #include "../shared/portability.h"
 
-extern MINDY_NORETURN void lose (char *fmt, ...) MINDY_FORMATLIKE(1, 2);
+extern MINDY_NORETURN void lose(char *fmt, ...) MINDY_FORMATLIKE(1, 2);

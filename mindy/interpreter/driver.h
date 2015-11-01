@@ -26,8 +26,13 @@
 \**********************************************************************/
 
 enum pause_reason {
-    pause_NoReason, pause_PickNewThread, pause_NothingToRun, pause_Interrupted,
-    pause_DebuggerInvoked, pause_HitBreakpoint, pause_DebuggerCommandFinished
+    pause_NoReason,
+    pause_PickNewThread,
+    pause_NothingToRun,
+    pause_Interrupted,
+    pause_DebuggerInvoked,
+    pause_HitBreakpoint,
+    pause_DebuggerCommandFinished
 };
 
 extern enum pause_reason do_stuff(void);

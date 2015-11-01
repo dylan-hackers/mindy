@@ -28,4 +28,3 @@
 
 extern void yyinput_setter(char *input);
 extern int yylex(void);
-

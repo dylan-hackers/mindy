@@ -26,7 +26,6 @@
 \**********************************************************************/
 
 
-
 extern void dump_setup_output(char *source, FILE *file);
 extern void dump_top_level_form(struct component *tlf);
 extern void dump_defmethod(struct id *name, struct component *tlf);

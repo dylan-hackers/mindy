@@ -27,8 +27,11 @@
 
 
 enum slot_allocation {
-    alloc_INSTANCE, alloc_CLASS, alloc_EACH_SUBCLASS,
-    alloc_VIRTUAL, alloc_Kinds
+    alloc_INSTANCE,
+    alloc_CLASS,
+    alloc_EACH_SUBCLASS,
+    alloc_VIRTUAL,
+    alloc_Kinds
 };
 
 struct library;

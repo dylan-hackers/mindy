@@ -53,10 +53,10 @@ extern obj_t make_raw_method(char *debug_name, obj_t specializers,
                              bool restp, obj_t keywords, bool all_keys,
                              obj_t result_types, obj_t more_results_type,
                              void (*iep)(obj_t self, struct thread *thread,
-                                      obj_t *args));
+                                         obj_t *args));
 extern void set_method_iep(obj_t method,
                            void (*iep)(obj_t self, struct thread *thread,
-                                    obj_t *args));
+                                       obj_t *args));
 extern obj_t make_builtin_method(char *debug_name, obj_t specializers,
                                  bool restp, obj_t keys, bool all_keys,
                                  obj_t result_type, obj_t (*func)());
@@ -70,7 +70,7 @@ extern obj_t byte_method_component(obj_t byte_method);
 extern obj_t make_accessor_method(obj_t debug_name, obj_t class, obj_t type,
                                   bool setter, obj_t datum,
                                   void (*iep)(obj_t self, struct thread *thread,
-                                           obj_t *args));
+                                              obj_t *args));
 extern obj_t accessor_method_datum(obj_t method);
 extern void set_accessor_method_datum(obj_t method, obj_t datum);
 
@@ -78,7 +78,7 @@ extern obj_t make_c_function(obj_t debug_name, void *pointer);
 
 extern obj_t make_generic_function(obj_t debug_name, obj_t specializers,
                                    bool restp, obj_t keys, bool all_keys,
-                                   obj_t result_types,obj_t more_results_type);
+                                   obj_t result_types, obj_t more_results_type);
 extern obj_t make_default_generic_function(obj_t debug_name, obj_t method);
 extern void set_gf_signature(obj_t gf, obj_t specializers, bool restp,
                              obj_t keys, bool all_keys, obj_t result_types,

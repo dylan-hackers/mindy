@@ -76,9 +76,13 @@ extern struct module *find_module(struct library *library, obj_t name,
                                   bool lose_if_imported);
 
 enum var_kind {
-    var_Assumed, var_AssumedWriteable,
-    var_Constant, var_Variable, var_Class,
-    var_GenericFunction, var_Method
+    var_Assumed,
+    var_AssumedWriteable,
+    var_Constant,
+    var_Variable,
+    var_Class,
+    var_GenericFunction,
+    var_Method
 };
 
 extern void define_variable(struct module *module, obj_t name,
@@ -92,7 +96,10 @@ struct variable {
     obj_t binding;
     obj_t value;
     obj_t /* type */ type;
-    enum { func_Yes, func_No, func_Maybe, func_Always } function;
+    enum { func_Yes,
+           func_No,
+           func_Maybe,
+           func_Always } function;
     obj_t /* symbol */ ref_file;
     int ref_line;
 };

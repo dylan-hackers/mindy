@@ -26,12 +26,20 @@
 \**********************************************************************/
 
 
-
 enum literal_kind {
-    literal_SYMBOL, literal_INTEGER, literal_SINGLE_FLOAT,
-    literal_DOUBLE_FLOAT, literal_EXTENDED_FLOAT, literal_CHARACTER,
-    literal_STRING, literal_LIST, literal_VECTOR, literal_TRUE, literal_FALSE,
-    literal_UNBOUND, literal_Kinds
+    literal_SYMBOL,
+    literal_INTEGER,
+    literal_SINGLE_FLOAT,
+    literal_DOUBLE_FLOAT,
+    literal_EXTENDED_FLOAT,
+    literal_CHARACTER,
+    literal_STRING,
+    literal_LIST,
+    literal_VECTOR,
+    literal_TRUE,
+    literal_FALSE,
+    literal_UNBOUND,
+    literal_Kinds
 };
 
 struct literal {

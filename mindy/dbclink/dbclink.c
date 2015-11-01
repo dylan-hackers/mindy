@@ -3,16 +3,16 @@
 
 int main(int argc, char *argv[])
 {
-  char *outname = *++argv;
-  FILE *out = fopen(outname, "wb");
-  while (*++argv != NULL) {
-    FILE *f = fopen(*argv, "rb");
-    int c;
-    while ((c = fgetc(f)) != EOF) {
-      fputc(c, out);
+    char *outname = *++argv;
+    FILE *out = fopen(outname, "wb");
+    while (*++argv != NULL) {
+        FILE *f = fopen(*argv, "rb");
+        int c;
+        while ((c = fgetc(f)) != EOF) {
+            fputc(c, out);
+        }
+        fclose(f);
     }
-    fclose(f);
-  }
-  fclose(out);
-  exit(0);
+    fclose(out);
+    exit(0);
 }

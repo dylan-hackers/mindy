@@ -52,13 +52,13 @@ struct thread_obj {
 
 #define C_CONTINUATION_MARKER rawptr_obj(0xf00)
 #define obj_is_saved_c_function(o) \
-  (((uintptr_t)(o) & 0xffff) == (uintptr_t)C_CONTINUATION_MARKER)
+    (((uintptr_t)(o)&0xffff) == (uintptr_t)C_CONTINUATION_MARKER)
 #define save_c_function_hi(c) \
-  rawptr_obj((unsigned long)(c) & ~1)
+    rawptr_obj((unsigned long)(c) & ~1)
 #define save_c_function_lo(c) \
-  rawptr_obj((((unsigned long)(c) & 1) << 16) | (unsigned long)C_CONTINUATION_MARKER)
+    rawptr_obj((((unsigned long)(c)&1) << 16) | (unsigned long)C_CONTINUATION_MARKER)
 #define restore_c_function(lo, hi) \
-  ((void (*)(struct thread *thread, obj_t *vals))((unsigned long)hi | ((unsigned long)(lo) >> 16)))
+    ((void (*)(struct thread * thread, obj_t * vals))((unsigned long)hi | ((unsigned long)(lo) >> 16)))
 
 struct thread {
     int id;

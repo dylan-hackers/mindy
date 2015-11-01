@@ -27,4 +27,4 @@
 
 extern int input_available(int fd);
 extern int output_writable(int fd);
-extern int mindy_read (int fd, char *buffer, int max_chars);
+extern int mindy_read(int fd, char *buffer, int max_chars);

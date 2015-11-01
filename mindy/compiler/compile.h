@@ -26,7 +26,6 @@
 \**********************************************************************/
 
 
-
 struct block {
     struct block *next;
     unsigned char *end;
@@ -76,7 +75,9 @@ struct component {
 };
 
 enum constant_kind {
-    constant_LITERAL, constant_METHODDESC, constant_VARREF
+    constant_LITERAL,
+    constant_METHODDESC,
+    constant_VARREF
 };
 
 struct constant {

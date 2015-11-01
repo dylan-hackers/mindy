@@ -43,15 +43,20 @@ struct object {
     obj_t class;
 };
 
-#define obj_is_ptr(o) (((uintptr_t)(o))&1)
-#define obj_ptr(type, o) ((type)(((uintptr_t)(o))-1))
-#define ptr_obj(ptr) ((obj_t)(((uintptr_t)(ptr))+1))
+#define obj_is_ptr(o) (((uintptr_t)(o)) & 1)
+#define obj_ptr(type, o) ((type)(((uintptr_t)(o)) - 1))
+#define ptr_obj(ptr) ((obj_t)(((uintptr_t)(ptr)) + 1))
 #define obj_rawptr(o) ((void *)(o))
 #define rawptr_obj(p) ((obj_t)(p))
 
 enum type_Id {
-    id_Singleton, id_Class, id_SubClass, id_LimFixnum, id_LimBignum,
-    id_Union, id_NoneOf
+    id_Singleton,
+    id_Class,
+    id_SubClass,
+    id_LimFixnum,
+    id_LimBignum,
+    id_Union,
+    id_NoneOf
 };
 
 extern MINDY_NORETURN void lose(char *fmt, ...) MINDY_FORMATLIKE(1, 2);
@@ -66,20 +71,20 @@ extern int mindy_readline(char *prompt, char *buffer, int max_chars);
 /* Don't call check_malloc yourself, always use the malloc macro.
  * Also, try to keep this section consistent with compiler/mindycomp.h
  */
-void *check_malloc(size_t, const char*, int);
+void *check_malloc(size_t, const char *, int);
 #ifdef malloc
 #undef malloc
 #endif
 #define malloc(sz) check_malloc(sz, __FILE__, __LINE__)
 
-void *check_calloc(size_t, size_t, const char*, int);
+void *check_calloc(size_t, size_t, const char *, int);
 #ifdef calloc
 #undef calloc
 #endif
-#define calloc(nobj,sz) check_calloc(nobj, sz, __FILE__, __LINE__)
+#define calloc(nobj, sz) check_calloc(nobj, sz, __FILE__, __LINE__)
 
-void *check_realloc(void*, size_t, const char*, int);
+void *check_realloc(void *, size_t, const char *, int);
 #ifdef realloc
 #undef realloc
 #endif
-#define realloc(ptr,sz) check_realloc(ptr, sz, __FILE__, __LINE__)
+#define realloc(ptr, sz) check_realloc(ptr, sz, __FILE__, __LINE__)

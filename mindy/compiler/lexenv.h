@@ -44,9 +44,12 @@ struct binding {
     struct binding *next;
 };
 
-extern struct binding
-    *make_binding(struct id *id, struct symbol *type, bool argument,
-                  int offset, struct method *home, struct binding *next);
-extern struct lexenv
-    *make_lexenv(struct method *method, struct binding *bindings, int depth);
-
+extern struct binding *make_binding(struct id *id,
+                                    struct symbol *type,
+                                    bool argument,
+                                    int offset,
+                                    struct method *home,
+                                    struct binding *next);
+extern struct lexenv *make_lexenv(struct method *method,
+                                  struct binding *bindings,
+                                  int depth);

@@ -52,12 +52,11 @@ struct string {
    A convenient way to access unicode characters in a stream of
    unicode characters.  Returns an integer.
 */
-#define get_unichar(str,index) ((string_chars(str)[2*index] << 8) \
-                                + (string_chars(str)[2*index + 1]))
+#define get_unichar(str, index) ((string_chars(str)[2 * index] << 8) \
+                                 + (string_chars(str)[2 * index + 1]))
 
 
 extern obj_t make_byte_string(char *chars);
 extern obj_t alloc_byte_string(int len);
 
 #endif
-
