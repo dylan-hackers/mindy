@@ -35,6 +35,6 @@ struct token {
     unsigned char chars[4];
 };
 
-extern struct token *make_token();
+extern struct token *make_token(const char* text, int length);
 
 extern int line_count;

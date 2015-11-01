@@ -1369,7 +1369,7 @@ static void pop_yacc_recoveries(int count)
         yacc_recovery_list = yacc_recovery_list->next;
 }
 
-struct token *make_token(char *ptr, int len)
+struct token *make_token(const char *ptr, int len)
 {
     struct token *token = malloc(sizeof(struct token)
                                  + len + 1 - sizeof(token->chars));
