@@ -1304,7 +1304,6 @@ void init_modules(void)
     {
         /* Define the dylan-user library. */
         struct defn *defn = malloc(sizeof(*defn));
-        struct use *use = malloc(sizeof(*use));
         defn->name = symbol("Dylan-User");
         defn->use = NULL;
         defn->exports = obj_Nil;
