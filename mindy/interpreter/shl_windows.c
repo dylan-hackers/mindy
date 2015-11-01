@@ -23,7 +23,7 @@ int shl_findsym (shl_t *handle, const char *sym, void **value)
         handle = &self_handle;
     }
 
-    *value = GetProcAddress(*handle, (char *)sym);
+    *value = GetProcAddress(*handle, sym);
 
     if (*value == NULL && handle == &self_handle)
     {
@@ -51,7 +51,7 @@ int shl_findsym (shl_t *handle, const char *sym, void **value)
 
         for (DWORD i = 0; i < modules_size / sizeof(HMODULE); i++)
         {
-            *value = GetProcAddress(modules[i], (char *)sym);
+            *value = GetProcAddress(modules[i], sym);
             if (*value != NULL) break;
         }
 

@@ -28,7 +28,7 @@ int shl_findsym (shl_t *handle, const char *sym, void **value)
         handle = &self_handle;
     }
 
-    *value = dlsym(*handle, (char *)sym);
+    *value = dlsym(*handle, sym);
 
     return dlerror() == 0 ? 0 : -1;
 }

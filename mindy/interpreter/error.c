@@ -51,7 +51,7 @@ static bool error_system_enabled = false;
 static struct variable *error_var = NULL;
 static struct variable *type_error_var = NULL;
 
-static void verror(char *msg, va_list ap)
+static void verror(const char *msg, va_list ap)
 {
     int nargs = count_format_args(msg);
     int i;
@@ -88,7 +88,7 @@ static void verror(char *msg, va_list ap)
     }
 }
 
-void error(char *msg, ...)
+void error(const char *msg, ...)
 {
     va_list ap;
     va_start(ap, msg);

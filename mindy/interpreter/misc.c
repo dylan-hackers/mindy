@@ -163,7 +163,7 @@ static obj_t dylan_system(obj_t command)
 
 static obj_t dylan_getenv(obj_t name)
 {
-    char *res = getenv((char *)string_chars(name));
+    const char *res = getenv((const char *)string_chars(name));
 
     if (res)
         return make_byte_string(res);

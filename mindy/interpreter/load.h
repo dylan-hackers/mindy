@@ -26,6 +26,6 @@
 \**********************************************************************/
 
 
-extern void load(char *name);
+extern void load(const char *name);
 extern void load_library(obj_t name);
 extern void load_do_inits(struct thread *thread);

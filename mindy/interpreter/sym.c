@@ -61,18 +61,18 @@ static int symtab_threshold = 0;
 static int symtab_length = 0;
 static obj_t *symtab_table = NULL;
 
-static unsigned hash_name(char *name)
+static unsigned hash_name(const char *name)
 {
-    unsigned char *ptr;
+    const unsigned char *ptr;
     unsigned hash = 0;
 
-    for (ptr = (unsigned char *)name; *ptr; ptr++)
+    for (ptr = (const unsigned char *)name; *ptr; ptr++)
         hash = ((hash<<5)|(hash>>27)) ^ (*ptr & ~('a'^'A'));
 
     return hash;
 }
 
-static bool same_name(char *name1, char *name2)
+static bool same_name(const char *name1, const char *name2)
 {
     char c1, c2;
 
@@ -127,7 +127,7 @@ static void rehash_table(void)
     symtab_threshold = (new_length * 3) / 2;
 }
 
-obj_t symbol(char *name)
+obj_t symbol(const char *name)
 {
     unsigned hash = hash_name(name);
     int index = hash % symtab_length;
@@ -155,9 +155,9 @@ obj_t symbol(char *name)
     return sym;
 }
 
-char *sym_name(obj_t sym)
+const char *sym_name(obj_t sym)
 {
-    return (char *)string_chars(SYMBOL(sym)->name);
+    return (const char *)string_chars(SYMBOL(sym)->name);
 }
 
 unsigned sym_hash(obj_t sym)

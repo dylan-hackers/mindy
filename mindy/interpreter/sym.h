@@ -28,6 +28,6 @@
 
 extern obj_t obj_SymbolClass, obj_KeywordClass;
 
-extern obj_t symbol(char *name);
-extern char *sym_name(obj_t sym);
+extern obj_t symbol(const char *name);
+extern const char *sym_name(obj_t sym);
 extern unsigned sym_hash(obj_t sym);

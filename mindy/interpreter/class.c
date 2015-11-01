@@ -296,7 +296,7 @@ void setup_class_supers(obj_t class, obj_t supers)
     }
 }
 
-static void vinit_builtin_class(obj_t class, char *name, va_list ap)
+static void vinit_builtin_class(obj_t class, const char *name, va_list ap)
 {
     obj_t super, supers;
 
@@ -313,7 +313,7 @@ static void vinit_builtin_class(obj_t class, char *name, va_list ap)
     define_class(name, class);
 }
 
-void init_builtin_class(obj_t class, char *name, ...)
+void init_builtin_class(obj_t class, const char *name, ...)
 {
     va_list ap;
 

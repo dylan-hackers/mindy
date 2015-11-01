@@ -327,7 +327,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
         SECURITY_ATTRIBUTES saAttr;
         int inpipes[2], outpipes[2];
         HANDLE old_handles[2];
-        char *command_line = (char *) string_chars(args[0]);
+        const char *command_line = (const char *) string_chars(args[0]);
 
         siStartInfo.cb = sizeof(STARTUPINFO);
         siStartInfo.lpReserved = NULL;

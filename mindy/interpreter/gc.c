@@ -726,7 +726,7 @@ void init_gc_functions(void)
                                     false, obj_Nil, obj_False, dylan_gc));
 
     {
-        char *str = getenv("BYTES_CONSED_BETWEEN_GCS");
+        const char *str = getenv("BYTES_CONSED_BETWEEN_GCS");
 
         if (str) {
             int bcbgcs = atoi(str);

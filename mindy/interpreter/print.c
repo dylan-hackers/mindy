@@ -99,7 +99,7 @@ void print(obj_t object)
     fputc('\n', stdout);
 }
 
-static void vvformat(char *fmt, va_list ap)
+static void vvformat(const char *fmt, va_list ap)
 {
     int args = count_format_args(fmt);
     obj_t vec = make_vector(args, NULL);
@@ -111,7 +111,7 @@ static void vvformat(char *fmt, va_list ap)
     vformat(fmt, SOVEC(vec)->contents, args);
 }
 
-void format(char *fmt, ...)
+void format(const char *fmt, ...)
 {
     va_list ap;
 
@@ -120,9 +120,9 @@ void format(char *fmt, ...)
     va_end(ap);
 }
 
-int count_format_args(char *fmt)
+int count_format_args(const char *fmt)
 {
-    char *ptr;
+    const char *ptr;
     int args = 0;
 
     for (ptr = fmt; *ptr != '\0'; ptr++) {
@@ -202,7 +202,7 @@ static void dylan_format(struct thread* thread, int nargs)
 
   push_linkage(thread, args);
   check_type(fmt, obj_ByteStringClass);
-  vformat((char*)string_chars(fmt), args+1, nargs-1);
+  vformat((const char*)string_chars(fmt), args+1, nargs-1);
   old_sp = pop_linkage(thread);
   thread->sp = old_sp;
   do_return(thread, old_sp, old_sp);
@@ -236,7 +236,7 @@ int check_and_print_number(obj_t obj, int nargs, int base, const char* fmt)
 }
 
 
-void vformat(char *fmt, obj_t *args, int nargs)
+void vformat(const char *fmt, obj_t *args, int nargs)
 {
     while (*fmt != '\0') {
         if (*fmt == '%') {
@@ -284,7 +284,7 @@ void vformat(char *fmt, obj_t *args, int nargs)
                     dylan_puts(*args++);
                 }
                 else if (instancep(*args, obj_SymbolClass)) {
-                    fputs((char *)sym_name(*args++), stdout);
+                    fputs((const char *)sym_name(*args++), stdout);
                 }
                 /* Can't print conditions, because they are defined in */
                 /* dylan. */

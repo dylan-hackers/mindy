@@ -133,7 +133,7 @@ static void print_c_pointer(obj_t ptr)
 {
     obj_t class = C_PTR(ptr)->class;
     obj_t class_name = obj_ptr(struct class *, class)->debug_name;
-    char *class_str;
+    const char *class_str;
 
     if (class_name != NULL && class_name != obj_False)
         class_str = sym_name(class_name);
@@ -147,7 +147,7 @@ static void print_c_pointer(obj_t ptr)
    callable "<c-function>" object for it. */
 obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
 {
-    char *string = (char *)string_chars(symbol);
+    const char *string = (const char *)string_chars(symbol);
     struct symtab *syms;
     int sym_count, i;
     obj_t retval = obj_False;
@@ -187,7 +187,7 @@ obj_t find_c_function(obj_t /* <string> */ symbol, obj_t lookup)
    "<c-pointer>" object for it. */
 obj_t find_c_ptr(obj_t /* <string> */ symbol, obj_t lookup)
 {
-    char *string = (char *)string_chars(symbol);
+    const char *string = (const char *)string_chars(symbol);
     struct symtab *syms;
     int sym_count, i;
     obj_t retval = obj_False;

@@ -61,7 +61,7 @@ static int mindy_getchar ()
    termination at the end, even if that means truncating some of the
    input
    */
-int mindy_readline(char *prompt, char *buffer, int max_chars)
+int mindy_readline(const char *prompt, char *buffer, int max_chars)
 {
 #ifdef HAVE_LIBREADLINE
     char *line = readline(prompt);

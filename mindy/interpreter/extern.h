@@ -38,7 +38,7 @@ struct c_pointer {
 #define C_PTR(o) obj_ptr(struct c_pointer *, o)
 
 struct symtab {
-    char *name;
+    const char *name;
     void *ptr;
 };
 

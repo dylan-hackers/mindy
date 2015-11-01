@@ -56,7 +56,7 @@ struct string {
                                  + (string_chars(str)[2 * index + 1]))
 
 
-extern obj_t make_byte_string(char *chars);
+extern obj_t make_byte_string(const char *chars);
 extern obj_t alloc_byte_string(int len);
 
 #endif

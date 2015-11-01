@@ -77,7 +77,7 @@ static void missing_arg(char *whose)
 
 /* exec_file_name is used by extern.c, so it can find the executable
    again and search it for symbol table stuff */
-char *exec_file_name;
+const char *exec_file_name;
 
 int main(int argc, char *argv[])
 {

@@ -35,7 +35,7 @@
 
 #include "config.h"
 
-extern char *exec_file_name;
+extern const char *exec_file_name;
 
 typedef struct _object *obj_t;
 
@@ -59,8 +59,8 @@ enum type_Id {
     id_NoneOf
 };
 
-extern MINDY_NORETURN void lose(char *fmt, ...) MINDY_FORMATLIKE(1, 2);
-extern int mindy_readline(char *prompt, char *buffer, int max_chars);
+extern MINDY_NORETURN void lose(const char *fmt, ...) MINDY_FORMATLIKE(1, 2);
+extern int mindy_readline(const char *prompt, char *buffer, int max_chars);
 
 #define assert(cond) \
     do { \

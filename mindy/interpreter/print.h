@@ -29,8 +29,8 @@ extern void prin1(obj_t object);
 extern void print(obj_t object);
 extern void print_nonzero_in_binary(int number);
 extern void print_number_in_binary(int number);
-extern void format(char *fmt, ...);
-extern int count_format_args(char *fmt);
-extern void vformat(char *fmt, obj_t *args, int nargs);
+extern void format(const char *fmt, ...);
+extern int count_format_args(const char *fmt);
+extern void vformat(const char *fmt, obj_t *args, int nargs);
 
 extern void def_printer(obj_t class, void (*print_fn)(obj_t object));

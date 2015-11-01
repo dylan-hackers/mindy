@@ -404,7 +404,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
         return NULL;
 
     if (file != cur_source_file) {
-        char *name = (char *)string_chars(file);
+        const char *name = (const char *)string_chars(file);
 
         if (cur_source_stream != NULL) {
             fclose(cur_source_stream);
@@ -470,7 +470,7 @@ static FILE *find_source_line(obj_t file, obj_t mtime, int line)
 static void explain_condition(struct thread *thread, obj_t condition)
 {
     if (instancep(condition, obj_SimpleObjectVectorClass)) {
-        char *fmt = (char *)string_chars(SOVEC(condition)->contents[0]);
+        const char *fmt = (const char *)string_chars(SOVEC(condition)->contents[0]);
 
         putchar('\n');
         vformat(fmt, SOVEC(condition)->contents+1, SOVEC(condition)->length-1);
@@ -548,15 +548,15 @@ static void explain_reason(enum pause_reason reason)
 /* Command tables. */
 
 struct cmd_entry {
-    char *cmd;
-    char *help;
+    const char *cmd;
+    const char *help;
     void (*fn)(obj_t args);
 };
 
-static struct cmd_entry *find_cmd(obj_t cmd_name, struct cmd_entry *table, char *what)
+static struct cmd_entry *find_cmd(obj_t cmd_name, struct cmd_entry *table, const char *what)
 {
     struct cmd_entry *match = NULL;
-    char *text = sym_name(cmd_name);
+    const char *text = sym_name(cmd_name);
     int leng = strlen(text);
 
     while (table->cmd) {
@@ -664,7 +664,7 @@ static int get_variable(obj_t obj, obj_t *sym, obj_t *mod, obj_t *lib)
     }
     return 0;
 }
-static int get_name(obj_t obj, char **name)
+static int get_name(obj_t obj, const char **name)
 {
     obj_t named;
     if (get_symbol(obj, &named)
@@ -673,7 +673,7 @@ static int get_name(obj_t obj, char **name)
         return 1;
     }
     if (get_string(obj, &named)) {
-        *name = (char *)string_chars(named);
+        *name = (const char *)string_chars(named);
         return 1;
     }
     return 0;
@@ -1983,7 +1983,7 @@ static void delete_cmd(obj_t args)
 static struct byteop_info {
     int match;
     int mask;
-    char *op;
+    const char *op;
 } ByteOpInfos[] = {
     {op_TRAP, 0xff, "trap"},
     {op_BREAKPOINT, 0xff, "breakpoint"},
@@ -2042,7 +2042,8 @@ static unsigned char *disassemble_op(obj_t component, unsigned char *start)
     unsigned char *ptr = start;
     unsigned char byte = *ptr++;
     struct byteop_info *info;
-    char buf[256], *fill = buf, *msg = "";
+    const char *msg = "";
+    char buf[256], *fill = buf;
     int i, c;
     obj_t trailer = NULL;
     bool extra = false;
@@ -2465,7 +2466,7 @@ static void help_cmd(obj_t args)
                 printf("%s\n", ptr->help);
     } else {
         while (any_args(args)) {
-            char *name;
+            const char *name;
 
             if ( ! get_name(first_arg(args), &name)) {
                 printf("Bogus command name: ");

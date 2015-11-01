@@ -66,7 +66,7 @@ static void maybe_copy_methods(obj_t new_gf, obj_t old_gf)
 /* This is the same as define_constant, but nobody calls it.
    So we take it out.
 
-void define(char *name, obj_t value)
+void define(const char *name, obj_t value)
 {
     obj_t namesym = symbol(name);
     struct variable *var;
@@ -79,7 +79,7 @@ void define(char *name, obj_t value)
 }
 */
 
-void define_constant(char *name, obj_t value)
+void define_constant(const char *name, obj_t value)
 {
     obj_t namesym = symbol(name);
     struct variable *var;
@@ -91,7 +91,7 @@ void define_constant(char *name, obj_t value)
     var->function = func_Maybe;
 }
 
-void define_function(char *name, obj_t specializers, bool restp,
+void define_function(const char *name, obj_t specializers, bool restp,
                      obj_t keywords, bool all_keys, obj_t result_type,
                      obj_t (*func)())
 {
@@ -100,7 +100,7 @@ void define_function(char *name, obj_t specializers, bool restp,
                                         all_keys, result_type, func));
 }
 
-void define_generic_function(char *name, obj_t specializers, bool restp,
+void define_generic_function(const char *name, obj_t specializers, bool restp,
                              obj_t keys, bool all_keys, obj_t result_types,
                              obj_t more_results_type)
 {
@@ -117,7 +117,7 @@ void define_generic_function(char *name, obj_t specializers, bool restp,
     var->function = func_Always;
 }
 
-void define_method(char *name, obj_t specializers, bool restp,
+void define_method(const char *name, obj_t specializers, bool restp,
                    obj_t keywords, bool all_keys, obj_t result_type,
                    obj_t (*func)())
 {
@@ -140,7 +140,7 @@ void define_method(char *name, obj_t specializers, bool restp,
     add_method(gf, method);
 }
 
-void define_class(char *name, obj_t value)
+void define_class(const char *name, obj_t value)
 {
     obj_t namesym = symbol(name);
     struct variable *var;

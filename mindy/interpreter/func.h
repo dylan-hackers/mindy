@@ -44,12 +44,12 @@ struct method_info {
 
 #define METHOD_INFO(o) obj_ptr(struct method_info *, o)
 
-extern obj_t make_raw_function(char *debug_name, obj_t specializers,
+extern obj_t make_raw_function(const char *debug_name, obj_t specializers,
                                bool restp, obj_t keywords, bool all_keys,
                                obj_t result_types, obj_t more_results_type,
                                void (*xep)(struct thread *thread, int nargs));
 
-extern obj_t make_raw_method(char *debug_name, obj_t specializers,
+extern obj_t make_raw_method(const char *debug_name, obj_t specializers,
                              bool restp, obj_t keywords, bool all_keys,
                              obj_t result_types, obj_t more_results_type,
                              void (*iep)(obj_t self, struct thread *thread,
@@ -57,7 +57,7 @@ extern obj_t make_raw_method(char *debug_name, obj_t specializers,
 extern void set_method_iep(obj_t method,
                            void (*iep)(obj_t self, struct thread *thread,
                                        obj_t *args));
-extern obj_t make_builtin_method(char *debug_name, obj_t specializers,
+extern obj_t make_builtin_method(const char *debug_name, obj_t specializers,
                                  bool restp, obj_t keys, bool all_keys,
                                  obj_t result_type, obj_t (*func)());
 extern obj_t make_method_info(bool rest_p, obj_t keys, bool all_keys,

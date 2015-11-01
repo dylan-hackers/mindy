@@ -26,16 +26,16 @@
 \**********************************************************************/
 
 
-/* extern void define(char *name, obj_t value); */
-extern void define_constant(char *name, obj_t value);
-extern void define_function(char *name, obj_t specializers, bool restp,
+/* extern void define(const char *name, obj_t value); */
+extern void define_constant(const char *name, obj_t value);
+extern void define_function(const char *name, obj_t specializers, bool restp,
                             obj_t keys, bool all_keys, obj_t result_type,
                             obj_t (*func)());
-extern void define_generic_function(char *name, obj_t specializers,
+extern void define_generic_function(const char *name, obj_t specializers,
                                     bool restp,
                                     obj_t keys, bool all_keys,
                                     obj_t res_types, obj_t more_results_type);
-extern void define_method(char *name, obj_t specializers, bool restp,
+extern void define_method(const char *name, obj_t specializers, bool restp,
                           obj_t keywords, bool all_keys, obj_t result_type,
                           obj_t (*func)());
-extern void define_class(char *name, obj_t class);
+extern void define_class(const char *name, obj_t class);

@@ -53,7 +53,7 @@ obj_t obj_UnicodeStringClass = 0;
    There is no corresponding make_unicode_string because it is worthless
    for interfacing with C code.
 */
-obj_t make_byte_string(char *chars)
+obj_t make_byte_string(const char *chars)
 {
     int len = strlen(chars);
     obj_t res = alloc(obj_ByteStringClass, sizeof(struct string)

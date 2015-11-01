@@ -138,7 +138,7 @@ struct function {
 
 #define FUNC(o) obj_ptr(struct function *, o)
 
-obj_t make_raw_function(char *debug_name, obj_t specializers,
+obj_t make_raw_function(const char *debug_name, obj_t specializers,
                         bool restp, obj_t keywords, bool all_keys,
                         obj_t result_types, obj_t more_results_type,
                         void (*xep)(struct thread *thread, int nargs))
@@ -553,7 +553,7 @@ static void method_xep(struct thread *thread, int nargs)
     }
 }
 
-obj_t make_raw_method(char *debug_name, obj_t specializers, bool restp,
+obj_t make_raw_method(const char *debug_name, obj_t specializers, bool restp,
                       obj_t keywords, bool all_keys, obj_t result_types,
                       obj_t more_results_type,
                       void (*iep)(obj_t self, struct thread *thread, obj_t *args))
@@ -896,7 +896,7 @@ static void (*builtin_method_ieps[])(obj_t m, struct thread *t, obj_t *a) = {
 
 #define MAX_BUILTIN_METHOD_ARGS (sizeof(builtin_method_ieps)/sizeof(builtin_method_ieps[0]))
 
-obj_t make_builtin_method(char *debug_name, obj_t specializers,
+obj_t make_builtin_method(const char *debug_name, obj_t specializers,
                           bool restp, obj_t keywords, bool all_keys,
                           obj_t result_type, obj_t (*func)())
 {
@@ -1862,7 +1862,7 @@ static void print_func(obj_t func)
     obj_t class = FUNC(func)->class;
     obj_t class_name = obj_ptr(struct class *, class)->debug_name;
     obj_t debug_name = FUNC(func)->debug_name;
-    char *class_str;
+    const char *class_str;
 
     if (class_name != NULL && class_name != obj_False)
         class_str = sym_name(class_name);
@@ -1883,7 +1883,7 @@ static void print_method(obj_t method)
     obj_t class = METHOD(method)->class;
     obj_t class_name = obj_ptr(struct class *, class)->debug_name;
     obj_t debug_name = METHOD(method)->debug_name;
-    char *class_str;
+    const char *class_str;
 
     if (class_name != NULL && class_name != obj_False)
         class_str = sym_name(class_name);

@@ -68,8 +68,8 @@ struct bucket {
 };
 
 struct table {
-    char *owner;  /* Which namespace owns this table, so we can print
-                     better error messages about name clashes */
+    const char *owner;  /* Which namespace owns this table, so we can print
+                           better error messages about name clashes */
     int entries;
     int threshold;
     int length;
@@ -91,7 +91,7 @@ struct entry {
     obj_t name;
     void *datum;
     bool exported;
-    char *template;
+    const char *template;
     obj_t p1;
     obj_t p2;
     obj_t p3;
@@ -261,7 +261,7 @@ static void *table_remove(struct table *table, obj_t symbol)
 
 
 /* Utilities */
-static char *safe_sym_name( obj_t t)
+static const char *safe_sym_name( obj_t t)
 {
     return object_class(t)==obj_SymbolClass ? sym_name(t) : "??";
 }
@@ -283,8 +283,8 @@ static obj_t format_entry_origin( struct entry *entry)
 }
 
 static void make_entry(struct table *table, obj_t name, void *datum,
-                       bool exported, char *template, obj_t p1, obj_t p2,
-                        obj_t p3)
+                       bool exported, const char *template, obj_t p1,
+                       obj_t p2, obj_t p3)
 {
     struct entry *old_entry = table_lookup(table, name);
     struct entry *entry;
@@ -311,14 +311,14 @@ static void make_entry(struct table *table, obj_t name, void *datum,
 
 static obj_t prepend_prefix(obj_t name, struct use *use)
 {
-    char *prefix;
+    const char *prefix;
     char *local_name;
     obj_t res;
 
     if (use->prefix == obj_False)
         return name;
 
-    prefix = (char *)obj_ptr(struct string *, use->prefix)->chars;
+    prefix = (const char *)obj_ptr(struct string *, use->prefix)->chars;
     local_name = (char *)malloc(strlen(prefix) + strlen(sym_name(name)) + 1);
     strcpy(local_name, prefix);
     strcat(local_name, sym_name(name));

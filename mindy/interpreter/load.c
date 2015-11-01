@@ -90,7 +90,7 @@ struct load_state {
 static struct load_state State;
 
 struct load_info {
-    char *name;
+    const char *name;
     int fd;
     unsigned char *buffer, *ptr, *end;
     obj_t *table, *table_end;
@@ -137,13 +137,13 @@ static void read_bytes(struct load_info *info, void *ptr, int bytes)
         }
 
         memcpy(ptr, info->ptr, count);
-        ptr = (char *)ptr + count;
+        ptr = ptr + count;
         bytes -= count;
         info->ptr = info->end = info->buffer;
 
         while (bytes > BUFFER_SIZE) {
             count = safe_read(info, ptr, bytes);
-            ptr = (char *)ptr + count;
+            ptr = ptr + count;
             bytes -= count;
         }
 
@@ -250,7 +250,7 @@ static obj_t fop_flame(struct load_info *info)
     return NULL;
 }
 
-static void check_size(struct load_info *info, int desired, char *what)
+static void check_size(struct load_info *info, int desired, const char *what)
 {
     int bytes = read_byte(info);
 
@@ -441,13 +441,13 @@ static obj_t fop_string(struct load_info *info)
 
 static obj_t fop_short_symbol(struct load_info *info)
 {
-    return store(info, symbol((char *)string_chars(fop_short_string(info))),
+    return store(info, symbol((const char *)string_chars(fop_short_string(info))),
                  next_handle(info));
 }
 
 static obj_t fop_symbol(struct load_info *info)
 {
-    return store(info, symbol((char *)string_chars(fop_string(info))),
+    return store(info, symbol((const char *)string_chars(fop_string(info))),
                  next_handle(info));
 }
 
@@ -949,7 +949,7 @@ static void load_group(struct load_info *info)
         read_thing(info);
 }
 
-struct load_info *make_load_info(char *name, int fd)
+struct load_info *make_load_info(const char *name, int fd)
 {
     struct load_info *info
         = (struct load_info *)malloc(sizeof(struct load_info));
@@ -977,7 +977,7 @@ static void free_load_info(struct load_info *info)
     free(info);
 }
 
-void load(char *name)
+void load(const char *name)
 {
     int fd;
     struct load_info *info;
@@ -1028,10 +1028,11 @@ void load(char *name)
 
 void load_library(obj_t name)
 {
-    char *load_path = getenv("DYLANPATH");
+    const char *load_path = getenv("DYLANPATH");
     char path[MAXPATHLEN];
     char default_path[MAXPATHLEN];
-    char *start, *ptr, *src, *dst;
+    char *dst;
+    const char *start, *ptr, *src;
     int c;
     obj_t was_loading;
 
@@ -1040,7 +1041,7 @@ void load_library(obj_t name)
 
     if (load_path == NULL) {
         /* no load path, compute default_path */
-        char *dylandir = getenv("DYLANDIR");
+        const char *dylandir = getenv("DYLANDIR");
         char* next = default_path;
         *next++ = '.';
         *next++ = SEPARATOR_CHAR;
