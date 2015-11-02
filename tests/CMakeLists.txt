@@ -28,11 +28,11 @@ SET(random-test_SOURCES
 )
 ADD_DYLAN_TEST(random-test)
 
-# SET(matrix-test_SOURCES
-#     matrix-test-exports.dylan
-#     matrix-test.dylan
-# )
-# ADD_DYLAN_TEST(matrix-test)
+SET(matrix-test_SOURCES
+    matrix-test-exports.dylan
+    matrix-test.dylan
+)
+ADD_DYLAN_TEST(matrix-test)
 
 SET(coll-ext-test_SOURCES
     coll-ext-test-exports.dylan
@@ -52,14 +52,14 @@ SET(format-test_SOURCES
 )
 ADD_DYLAN_TEST(format-test)
 
-# SET(format-out-test_SOURCES
-#     format-out-test-exports.dylan
-#     format-out-test.dylan
-# )
-# ADD_DYLAN_TEST(format-out-test)
+SET(format-out-test_SOURCES
+    format-out-test-exports.dylan
+    format-out-test.dylan
+)
+ADD_DYLAN_TEST(format-out-test)
 
-# SET(getopttest_SOURCES
-#     getopt-test-exports.dylan
-#     getopt-test.dylan
-# )
-# ADD_DYLAN_TEST(getopttest)
+SET(getopttest_SOURCES
+    getopt-test-exports.dylan
+    getopt-test.dylan
+)
+ADD_DYLAN_TEST(getopttest)
