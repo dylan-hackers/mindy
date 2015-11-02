@@ -1,5 +1,5 @@
 SET(format-test_SOURCES
-    format-test-exports.dylan
+    library.dylan
     format-test.dylan
 )
 ADD_DYLAN_TEST(format-test)
