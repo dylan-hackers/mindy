@@ -41,8 +41,4 @@
 #define MINDY_INLINE
 #endif
 
-#ifdef _WIN32
-#define strncasecmp stricmp
-#endif
-
 #endif

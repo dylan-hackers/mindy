@@ -68,7 +68,7 @@ MINDY_INLINE static void dump_bytes(const void *ptr, int bytes)
 
     while (bytes > 0) {
         count = fwrite(ptr, 1, bytes, File);
-        ptr = ptr + count;
+        ptr = ((char*)ptr) + count;
         bytes -= count;
     }
 }

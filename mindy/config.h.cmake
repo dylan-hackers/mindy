@@ -1,5 +1,7 @@
 #cmakedefine HAVE__LONGJMP @HAVE__LONGJMP@
 #cmakedefine HAVE__SETJMP @HAVE__SETJMP@
+#cmakedefine HAVE_STRCASECMP @HAVE_STRCASECMP@
+#cmakedefine HAVE_STRNCASECMP @HAVE_STRNCASECMP@
 #cmakedefine HAVE_DAYLIGHT @HAVE_DAYLIGHT@
 #cmakedefine HAVE_LIBREADLINE @HAVE_LIBREADLINE@
 #cmakedefine HAVE_READLINE_READLINE_H @HAVE_READLINE_READLINE_H@
@@ -24,6 +26,16 @@
 #   define _longjmp longjmp
 #endif
 
-#ifdef _WIN32
+#ifdef MINGW_USE_BUILTIN_SETJMP_LONGJMP
+#   undef _setjmp
+#   define _setjmp __builtin_setjmp
+#   undef _longjmp
+#   define _longjmp __builtin_longjmp
+#endif
+
+#ifndef HAVE_STRCASECMP
 #   define strcasecmp stricmp
+#endif
+#ifndef HAVE_STRNCASECMP
+#   define strncasecmp strnicmp
 #endif

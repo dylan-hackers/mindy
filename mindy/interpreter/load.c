@@ -137,13 +137,13 @@ static void read_bytes(struct load_info *info, void *ptr, int bytes)
         }
 
         memcpy(ptr, info->ptr, count);
-        ptr = ptr + count;
+        ptr = ((char*)ptr) + count;
         bytes -= count;
         info->ptr = info->end = info->buffer;
 
         while (bytes > BUFFER_SIZE) {
             count = safe_read(info, ptr, bytes);
-            ptr = ptr + count;
+            ptr = ((char*)ptr) + count;
             bytes -= count;
         }
 
@@ -985,7 +985,7 @@ void load(const char *name)
     if (strcmp(name, "-") == 0)
       fd = 0;
     else {
-#if WIN32
+#if _WIN32
       fd = open(name, O_RDONLY | O_BINARY, 0);
 #else
       fd = open(name, O_RDONLY, 0);

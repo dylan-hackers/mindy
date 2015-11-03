@@ -21,6 +21,11 @@ OPTION(MINDY_USE_SIGNALS "Use signals." ${MINDY_USE_SIGNALS})
 CHECK_FUNCTION_EXISTS(_setjmp HAVE__SETJMP)
 CHECK_FUNCTION_EXISTS(_longjmp HAVE__LONGJMP)
 
+IF(MINGW)
+  # Workaround for bug: http://sourceforge.net/p/mingw-w64/bugs/406.
+  ADD_DEFINITIONS(-DMINGW_USE_BUILTIN_SETJMP_LONGJMP)
+ENDIF()
+
 # Linux provides this.
 CHECK_SYMBOL_EXISTS(sincos math.h HAVE_SINCOS)
 IF(NOT HAVE_SINCOS)
@@ -42,6 +47,10 @@ IF (NOT WIN32)
 ENDIF()
 
 CHECK_TYPE_SIZE("void*" SIZEOF_VOID_P)
+
+# MSVC doesn't provide these.
+CHECK_FUNCTION_EXISTS(strcasecmp HAVE_STRCASECMP)
+CHECK_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
 
 # Even though this is for the interpreter, we do this here
 # so that the results can make it into the config.h file.
