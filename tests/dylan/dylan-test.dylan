@@ -41,6 +41,7 @@ define constant tautologies =
   #(#"booleans",
     #"comparisons",
     #"numbers",
+    #"limited integers",
     #"characters",
     #"symbols",
     #"collections",
@@ -252,6 +253,19 @@ define method tautology(arg == #"collections")
     | signal("no key-test for vector()!\n");
 end method;
 
+define method test-limited-int (int :: limited(<integer>, min: 0, max: 3))
+  "foo";
+end method;
+
+define method test-limited-int (int :: limited(<integer>, min: 5, max: 10))
+  "bar";
+end method;
+
+define method tautology(arg == #"limited integers")
+  (test-limited-int(8) = "bar"
+    | signal("function-dispatch on 8 yields: %=\n", test-limited-int(8)));
+end method tautology;
+
 #if (~mindy)
 
 // Mindy doesn't support limited collections
@@ -278,18 +292,8 @@ define method test-limited-coll (coll :: <type3>)
   <type3>;
 end method test-limited-coll;
 
-define method test-limited-int (int :: limited(<integer>, min: 0, max: 3))
-  "foo";
-end method;
-
-define method test-limited-int (int :: limited(<integer>, min: 5, max: 10))
-  "bar";
-end method;
-
 define method tautology(arg == #"limited collections")
   let int-vec = as(<int-vector>, #[5, 3, 2]);
-  (test-limited-int(8) = "bar"
-    | signal("function-dispacth on 8 yields: %=\n", test-limited-int(8)));
   (instance?("foo", <type1>)
      | signal("instance?(\"foo\", %=) is false!\n", <type1>));
   (instance?("foo", <type2>)
