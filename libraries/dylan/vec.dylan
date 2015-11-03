@@ -147,7 +147,7 @@ end method \=;
 
 // No collection alignment done here because it only handles the
 // all-vector case.
-define method map-as(cls :: limited(<class>, subclass-of: <vector>),
+define method map-as(cls :: subclass(<vector>),
                      function :: <function>,
                      vector :: <vector>,
                      #next next-method,

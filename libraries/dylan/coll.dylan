@@ -145,7 +145,7 @@ define method shallow-copy(collection :: <collection>)
 end method shallow-copy;
 
 
-define method as(cls :: limited(<class>, subclass-of: <collection>),
+define method as(cls :: subclass(<collection>),
                  coll :: <collection>, #next next-method)
  => new-version :: <object>;
   case

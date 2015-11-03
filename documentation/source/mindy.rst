@@ -369,7 +369,7 @@ information on defining and undefining features.
 Mindy allows you to place library and module definitions in the same
 file as the actual code. See `Using Libraries and Modules`_ for details.
 
-Mindy supports subclass specializers via the **limited** function. A
+Mindy supports subclass specializers via the **subclass** function. A
 subclass specializer causes a method to be invoked whenever the generic
 function was called on a value that is the specified class or any
 subclass of the specified class. The method is never invoked on a value
@@ -380,7 +380,7 @@ example:
 ::
 
               define method make
-                  (result-class :: limited(<class>, subclass-of: <my-class>));
+                  (result-class :: subclass(<my-class>));
                 let x = next-method();
                 do-special-logging-or-something(x);
                 x;

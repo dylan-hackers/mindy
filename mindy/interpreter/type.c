@@ -1119,10 +1119,8 @@ static obj_t dylan_limited_integer(obj_t class, obj_t min, obj_t max)
                       limited_bignum(min, max));
 }
 
-static obj_t dylan_limited_class(obj_t class, obj_t subclass_of)
+static obj_t dylan_subclass(obj_t subclass_of)
 {
-    if (subclass_of == obj_Unbound)
-        error("subclass-of: required but missing");
     check_type(subclass_of, obj_ClassClass);
     return subclass(subclass_of);
 }
@@ -1330,9 +1328,9 @@ void init_type_functions(void)
                   list2(pair(symbol("min"), obj_False),
                         pair(symbol("max"), obj_False)),
                   false, obj_TypeClass, dylan_limited_bignum);
-    define_method("limited", list1(singleton(obj_ClassClass)), false,
-                  list1(pair(symbol("subclass-of"), obj_Unbound)),
-                  false, obj_TypeClass, dylan_limited_class);
+
+    define_method("subclass", list1(obj_ClassClass), false,
+                  obj_False, false, obj_TypeClass, dylan_subclass);
 
     define_function("singleton-object", list1(obj_SingletonClass), false,
                     obj_False, false, obj_ObjectClass, dylan_singleton_object);

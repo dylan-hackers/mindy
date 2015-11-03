@@ -61,14 +61,6 @@ define variable melange-target :: one-of(#"mindy", #"d2c") = #"mindy";
 // Mindy/d2c incompatibility fixes
 //------------------------------------------------------------------------
 
-define method subclass-type(type :: <byte-string>) => result :: <byte-string>;
-  select (melange-target)
-    #"mindy" => format-to-string("limited(<class>, subclass-of: %s)", type);
-    #"d2c" => format-to-string("subclass(%s)", type);
-    otherwise => error("This should never happen in subclass-type()");
-  end select;
-end method subclass-type;
-
 define method class-sealing() => result :: <byte-string>;
   select (melange-target)
     #"mindy" => "";
@@ -543,10 +535,10 @@ define method write-declaration
       // Finally write out a "content-size" function for use by "make", etc.
       format(stream,
              "define method content-size "
-               "(value :: %s) "
+               "(value :: subclass(%s)) "
                "=> (result :: <integer>);\n"
                "  %d;\nend method content-size;\n\n",
-             subclass-type(decl.dylan-name), decl.c-type-size);
+             decl.dylan-name, decl.c-type-size);
     end if;
   end if;
 end method write-declaration;
@@ -591,10 +583,10 @@ define method write-declaration
       // Finally write out a "content-size" function for use by "make", etc.
       format(stream,
              "define method content-size "
-               "(value :: %s) "
+               "(value :: subclass(%s)) "
                " => (result :: <integer>);\n  %d;\n"
                "end method content-size;\n\n",
-             subclass-type(decl.dylan-name), decl.c-type-size);
+             decl.dylan-name, decl.c-type-size);
     end if;
   end if;
 end method write-declaration;
@@ -1092,10 +1084,10 @@ define method write-declaration
     // Finally write out a "content-size" function for use by "make", etc.
     format(stream,
            "define method content-size "
-             "(value :: %s) "
+             "(value :: subclass(%s)) "
              "=> (result :: <integer>);\n  %d;\n"
              "end method content-size;\n\n",
-           subclass-type(decl.dylan-name), target-type.c-type-size);
+           decl.dylan-name, target-type.c-type-size);
   end if;
 end method write-declaration;
 

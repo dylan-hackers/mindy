@@ -70,7 +70,7 @@ define method as (class == <ratio>, num :: <number>)
 end;
 
 
-define method as (class :: limited(<class>, subclass-of: <float>),
+define method as (class :: subclass(<float>),
                   num :: <ratio>)
     => res :: <float>;
   as(class, num.numerator) / as(class, num.denominator);

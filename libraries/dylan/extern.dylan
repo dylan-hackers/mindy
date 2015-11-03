@@ -82,7 +82,7 @@ define open generic pointer-value-setter
 // 0.  "Structure-size" is defined as an alias for compatibility with Creole.
 //
 define open generic content-size
-    (cls :: limited(<class>, subclass-of: <statically-typed-pointer>))
+    (cls :: subclass(<statically-typed-pointer>))
  => (result :: <integer>);
 
 define constant structure-size = content-size;
@@ -119,7 +119,7 @@ end method import-value;
 // specifying "extra-bytes:".
 //
 define method make
-    (cls :: limited(<class>, subclass-of: <statically-typed-pointer>),
+    (cls :: subclass(<statically-typed-pointer>),
      #rest rest,
      #key extra-bytes :: <integer> = 0,
           pointer,
@@ -186,7 +186,7 @@ define method type-for-copy (string :: <c-string>) => type :: <type>;
 end method type-for-copy;
 
 define method make
-    (cls :: limited(<class>, subclass-of: <c-string>),
+    (cls :: subclass(<c-string>),
      #next next, #key size: sz = 0, fill = ' ')
  => result :: <c-string>;
   let result = next(cls, element-count: sz + 1);
@@ -232,7 +232,7 @@ define method pointer-value-setter
 end method pointer-value-setter;
 
 define method content-size
-    (value :: limited(<class>, subclass-of: <c-string>))
+    (value :: subclass(<c-string>))
  => (result :: <integer>);
   1;
 end method content-size;

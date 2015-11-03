@@ -55,6 +55,7 @@ define constant tautologies =
     #"ranges",
     #"stretchy vectors",
     #"strings",
+    #"subclass",
     #"tables",
     #"vectors");
 
@@ -557,6 +558,30 @@ end method;
 define method tautology(arg == #"strings")
   let a = make(<byte-string>);
 end method;
+
+define method test-subclass (val)
+  "object"
+end method;
+
+define method test-subclass (val :: subclass(<string>))
+  "string";
+end method;
+
+define method test-subclass (val :: subclass(<number>))
+  "number"
+end method;
+
+define method tautology(arg == #"subclass")
+  (test-subclass(<byte-string>) = "string"
+    | signal("function-dispatch on <byte-string> yields: %=\n",
+             test-subclass(<byte-string>)));
+  (test-subclass(<integer>) = "number"
+    | signal("function-dispatch on <integer> yields: %=\n",
+             test-subclass(<integer>)));
+  (test-subclass(<vector>) = "object"
+    | signal("function-dispatch on <vector> yields: %=\n",
+             test-subclass(<vector>)));
+end method tautology;
 
 define method tautology(arg == #"tables")
   let a = make(<table>);

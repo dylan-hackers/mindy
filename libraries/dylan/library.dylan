@@ -99,7 +99,7 @@ define module Builtin-Stuff
     slot-descriptors, slot-getter, slot-getter-method, slot-initialized?,
     slot-name, slot-setter, slot-setter-method, slot-type, slot-value,
     slot-value-setter, sorted-applicable-methods, spawn-thread, state-valid?,
-    subclass-of, subtype?, system, symbol-hash,
+    subclass, subclass-of, subtype?, system, symbol-hash,
     tail, tail-setter, truncate, truncate/,
     // union,
     union-members,
@@ -198,7 +198,7 @@ define module Dylan
              pair,
              remove-method, round, round/,
              singleton, size, slot-initialized?, sorted-applicable-methods,
-             subtype?,
+             subclass, subtype?,
              table-protocol, tail, tail-setter, truncate, truncate/,
 //             union,
              values, vector};

@@ -55,7 +55,7 @@ end class <window>;
 // accepted by "make".
 //
 define generic define-widget
-    (cls :: limited(<class>, subclass-of: <window>), tk-command :: <string>,
+    (cls :: subclass(<window>), tk-command :: <string>,
      #rest options)
  => ();
 
@@ -187,7 +187,7 @@ define variable pack-options-table :: <mutable-explicit-key-collection>
 // See description of the generic above
 //
 define method define-widget
-    (cls :: limited(<class>, subclass-of: <window>), tk-command :: <string>,
+    (cls :: subclass(<window>), tk-command :: <string>,
      #rest options) => ();
   tk-command-table[cls] := tk-command;
   options-table[cls] := make(<object-table>);

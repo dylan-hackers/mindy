@@ -93,7 +93,7 @@ extensions to the Dylan module as described below:
        x * x * x;
      end method cube;
 
-- Gwydion compilers supports subclass specializers via the ``limited``
+- Gwydion compilers supports subclass specializers via the ``subclass``
   function. A subclass specializer causes a method to be invoked
   whenever the generic function was called on a value that is the
   specified class or any subclass of the specified class. The method is
@@ -104,7 +104,7 @@ extensions to the Dylan module as described below:
   .. code-block:: dylan
 
      define method make
-         (result-class :: limited(<class>, subclass-of: <my-class>));
+         (result-class :: subclass(<my-class>));
        let x = next-method();
        do-special-logging-or-something(x);
        x;
