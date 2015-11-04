@@ -101,20 +101,30 @@ static DWORD input_checker (LPDWORD param)
         char small_buffer;  /* Ignore the contents of the next two vars */
         int bytes_read;
         DWORD the_error = 0;
-        bool read_result;
         /* Wait until someone invalidates our last answer */
         WaitForSingleObject(update_input_available[fd], INFINITE);
         /* Now loop until we complete a read without getting a
            broken pipe error */
         /* read 0 bytes, block if not available */
-        read_result = ReadFile(handle, &small_buffer,
-                               0, &bytes_read, NULL);
-        if (!read_result) {
-            the_error = GetLastError();
-            if (the_error != ERROR_BROKEN_PIPE) {
+        if (_fileno(stdin) == fd) {
+            if (!PeekConsoleInput(handle, &small_buffer, 0, &bytes_read)) {
+                the_error = GetLastError();
                 /* handle broken pipes later */
-                lose("Read error type %d on fd %d (aka handle #x%x)",
-                     the_error, fd, handle);
+                if (the_error != ERROR_BROKEN_PIPE) {
+                    lose("Read error type %d on fd %d (aka handle #x%x)",
+                         the_error, fd, handle);
+                }
+            }
+        }
+        else {
+            if (!PeekNamedPipe(handle, NULL, 0, NULL, NULL, NULL)) {
+                the_error = GetLastError();
+                /* handle broken pipes later */
+                if (the_error != ERROR_BROKEN_PIPE
+                        && the_error != ERROR_INVALID_FUNCTION) {
+                    lose("Read error type %d on fd %d (aka handle #x%x)",
+                         the_error, fd, handle);
+                }
             }
         }
         input_available_array[fd] = true;
@@ -360,7 +370,7 @@ static void fd_exec(obj_t self, struct thread *thread, obj_t *args)
 
 static void fd_sync_output(obj_t self, struct thread *thread, obj_t *args)
 {
-  HANDLE fHandle = _get_osfhandle(args[0]);
+  HANDLE fHandle = _get_osfhandle(fixnum_value(args[0]));
   int res = FlushFileBuffers(fHandle);
 
   if (res == 0 && GetLastError() == ERROR_INVALID_HANDLE) // File descriptor is for console, ignore error
