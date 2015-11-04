@@ -148,7 +148,7 @@ define module extras
     <format-string-condition>, report-condition,
     condition-format, condition-force-output,
     ratio, integer-length, $unsupplied, false-or, instantiable?,
-    add-debug-variable;
+    add-debug-variable, <stretchy-object-vector>;
 end;
 
 

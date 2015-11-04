@@ -67,23 +67,13 @@ define method print-test () => ();
   run-test(print-to-string(eint), "#e-1", "extended-integer");
 
   let sequence-1 = make(<stretchy-vector>);
-#if (mindy)
-  run-test(print-to-string(sequence-1), "{<simple-stretchy-vector>: }",
-           "empty sequence");
-#else
   run-test(print-to-string(sequence-1), "{<stretchy-object-vector>: }",
            "empty sequence");
-#endif
 
   let sequence-2 = make(<stretchy-vector>, size: 5);
   sequence-2[3] := 3;
-#if (mindy)
-  run-test(print-to-string(sequence-2),
-           "{<simple-stretchy-vector>: #f, #f, #f, 3, #f}", "sequence");
-#else
   run-test(print-to-string(sequence-2),
            "{<stretchy-object-vector>: #f, #f, #f, 3, #f}", "sequence");
-#endif
 
   let sequence-3 = #[4, 5, 6, 2];
   run-test(print-to-string(sequence-3), "#[4, 5, 6, 2]", "vector");

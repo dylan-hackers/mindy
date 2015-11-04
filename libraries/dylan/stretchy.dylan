@@ -40,24 +40,24 @@ end class <stretchy-vector>;
 
 define method make
     (cls == <stretchy-vector>, #rest keys, #key, #all-keys)
- => vec :: <simple-stretchy-vector>;
-  apply(make, <simple-stretchy-vector>, keys);
+ => vec :: <stretchy-object-vector>;
+  apply(make, <stretchy-object-vector>, keys);
 end method;
 
 
 
-//// <simple-stretchy-vector>
+//// <stretchy-object-vector>
 
-define class <simple-stretchy-vector> (<stretchy-vector>)
+define class <stretchy-object-vector> (<stretchy-vector>)
   slot ssv-data :: <simple-object-vector>, required-init-keyword: data:;
   slot ssv-fill :: <integer>, required-init-keyword: fill:;
-end class <simple-stretchy-vector>;
+end class <stretchy-object-vector>;
 
 
-define method make(cls == <simple-stretchy-vector>,
+define method make(cls == <stretchy-object-vector>,
                    #next next-method,
                    #key size: sz = #f, fill, dimensions)
- => vec :: <simple-stretchy-vector>;
+ => vec :: <stretchy-object-vector>;
   if (sz & dimensions)
     error("Can't supply both a size: and dimensions:");
   else
@@ -87,11 +87,11 @@ define method make(cls == <simple-stretchy-vector>,
   end if;
 end method make;
 
-define method size(ssv :: <simple-stretchy-vector>) => size :: <integer>;
+define method size(ssv :: <stretchy-object-vector>) => size :: <integer>;
   ssv-fill(ssv);
 end method size;
 
-define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
+define method size-setter(new :: <integer>, ssv :: <stretchy-object-vector>)
  => new :: <integer>;
   let fill = ssv-fill(ssv);
   let data = ssv-data(ssv);
@@ -118,13 +118,13 @@ define method size-setter(new :: <integer>, ssv :: <simple-stretchy-vector>)
   ssv-fill(ssv) := new;
 end method size-setter;
 
-define method dimensions(ssv :: <simple-stretchy-vector>)
+define method dimensions(ssv :: <stretchy-object-vector>)
  => dimensions :: <list>;
   list(size(ssv));
 end method dimensions;
 
 
-define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
+define method element(ssv :: <stretchy-object-vector>, key :: <integer>,
                       #key default = $unsupplied)
  => elt :: <object>;
   case
@@ -137,7 +137,7 @@ define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
   end case;
 end method element;
 
-define method element-setter(value, ssv :: <simple-stretchy-vector>,
+define method element-setter(value, ssv :: <stretchy-object-vector>,
                              key :: <integer>)
  => value :: <object>;
   if (key < 0)
@@ -150,8 +150,8 @@ define method element-setter(value, ssv :: <simple-stretchy-vector>,
   end if;
 end method element-setter;
 
-define method add!(ssv :: <simple-stretchy-vector>, new-element)
- => ssv :: <simple-stretchy-vector>;
+define method add!(ssv :: <stretchy-object-vector>, new-element)
+ => ssv :: <stretchy-object-vector>;
   let data = ssv-data(ssv);
   let fill = size(ssv);
   if (fill = size(data))
@@ -171,9 +171,9 @@ define method add!(ssv :: <simple-stretchy-vector>, new-element)
   ssv;
 end method add!;
 
-define method remove!(ssv :: <simple-stretchy-vector>, elem,
+define method remove!(ssv :: <stretchy-object-vector>, elem,
                       #key test = \==, count)
- => ssv :: <simple-stretchy-vector>;
+ => ssv :: <stretchy-object-vector>;
   unless (count & (count = 0))
     let data = ssv-data(ssv);
     let sz = size(ssv);
