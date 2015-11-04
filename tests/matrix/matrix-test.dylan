@@ -162,4 +162,5 @@ define method main (argv0, #rest ignored)
     format("All matrix tests pass.\n");
   end if;
   force-output(*standard-output*);
+  exit(exit-code: if (has-errors) 1 else 0 end);
 end method main;

@@ -71,4 +71,5 @@ define method main (argv0 :: <byte-string>, #rest ignored)
   else
     format("All internal-time tests pass.\n");
   end if;
+  exit(exit-code: if (has-errors) 1 else 0 end);
 end method main;

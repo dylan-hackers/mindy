@@ -134,4 +134,5 @@ define method main (argv0, #rest ignored)
   else
     format("All print tests pass.\n");
   end if;
+  exit(exit-code: if (has-errors) 1 else 0 end);
 end method main;
