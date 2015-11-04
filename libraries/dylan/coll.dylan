@@ -98,7 +98,7 @@ define open generic key-test
 // we must define a default method for all collections.
 //
 define method element(coll :: <collection>, key :: <object>,
-                      #key default = $not-supplied) => obj :: <object>;
+                      #key default = $unsupplied) => obj :: <object>;
   let (init-state, limit, next-state, done?,
        current-key, current-element) = forward-iteration-protocol(coll);
   let test = key-test(coll);
@@ -109,7 +109,7 @@ define method element(coll :: <collection>, key :: <object>,
         return(current-element(coll, state));
       end if;
     finally
-      if (default == $not-supplied)
+      if (default == $unsupplied)
         error("No such element in %=: %=", coll, key);
       else
         default;
@@ -575,12 +575,12 @@ define open generic subsequence-position
 
 
 define method element(sequence :: <sequence>, key :: <integer>,
-                      #key default = $not-supplied) => elt :: <object>;
+                      #key default = $unsupplied) => elt :: <object>;
   block (return)
     for (this-key from 0, elem in sequence)
       if (this-key == key) return(elem) end if;
     finally
-      if (default == $not-supplied)
+      if (default == $unsupplied)
         error("No such element in %=: %=", sequence, key);
       else
         default;

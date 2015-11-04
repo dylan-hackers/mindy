@@ -310,7 +310,7 @@ define module print
   use system, import: { <raw-pointer> };
 #endif
   use extensions,
-    import: {$minimum-integer, $not-supplied, <byte-character>,
+    import: {$minimum-integer, $unsupplied, <byte-character>,
              <ratio>, numerator, denominator};
   export
     print, print-object, print-to-string,

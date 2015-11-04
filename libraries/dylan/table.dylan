@@ -456,7 +456,7 @@ end method find-elt;
 // to avoid race conditions with the garbage collector.
 //
 define method element (ht :: <table>, key :: <object>,
-                       #key default: default = $not-supplied )
+                       #key default: default = $unsupplied )
  => elt :: <object>;
   // We don't yet check for outdated hash states, since the element
   // might match anyway, and the lookup is much cheaper than a rehash.
@@ -477,7 +477,7 @@ define method element (ht :: <table>, key :: <object>,
   elseif (~ht.table-hash-state.state-valid? | ~key-state.state-valid?)
     rehash(ht);
     element(ht, key, default: default);
-  elseif (default == $not-supplied)
+  elseif (default == $unsupplied)
     error("Element not found");
   else
     default;
@@ -487,7 +487,7 @@ end method element;
 // This is exactly the same code without the garbage collection stuff
 //
 define method element (  ht :: <value-table>, key,
-                         #key default: default = $not-supplied )
+                         #key default: default = $unsupplied )
  => elt :: <object>;
   let (key=, key-hash)      = table-protocol(ht);
   let key-id                = key-hash(key, ht.table-hash-state);
@@ -497,7 +497,7 @@ define method element (  ht :: <value-table>, key,
 
   if (find-result)
     find-result.entry-elt;
-  elseif (default == $not-supplied)
+  elseif (default == $unsupplied)
     error ("Element not found");
   else
     default;

@@ -34,13 +34,13 @@ copyright: see below
 ///
 define method read-to (stream :: <buffered-stream>, element :: <object>,
                        #key on-end-of-stream :: <object>
-                              = $not-supplied,
+                              = $unsupplied,
                             test :: <function> = \==)
  => (sequence-or-eof :: <object>, found? :: <boolean>);
   block ()
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~ buf)
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         values(on-end-of-stream, #f);
@@ -70,13 +70,13 @@ end method read-to;
 ///
 define method read-through (stream :: <buffered-stream>, element :: <object>,
                                    #key on-end-of-stream :: <object>
-                                          = $not-supplied,
+                                          = $unsupplied,
                                         test :: <function> = \==)
  => (sequence-or-eof :: <object>, found? :: <boolean>);
   block ()
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~ buf)
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         values(on-end-of-stream, #f);

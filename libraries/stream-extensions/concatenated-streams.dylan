@@ -139,14 +139,14 @@ define inline function do-combo-stream-function
   block (return)
     while (#t)
       if (stream.inner-stream-is-bogus?)
-        if (on-end-of-stream == $not-supplied)
+        if (on-end-of-stream == $unsupplied)
           signal(make(<end-of-stream-error>, stream: stream));
         else
           return(on-end-of-stream);
         end if;
       end if;
       block ()
-        if (on-end-of-stream == $not-supplied)
+        if (on-end-of-stream == $unsupplied)
           return(apply(func, stream.inner-stream, args));
         else
           let args
@@ -190,7 +190,7 @@ end method;
 
 define inline method read-element
     (stream :: <concatenated-stream>,
-     #key on-end-of-stream :: <object> = $not-supplied)
+     #key on-end-of-stream :: <object> = $unsupplied)
  => element-or-eof :: <object>;
   do-combo-stream-function(read-element, stream, on-end-of-stream);
 end method;
@@ -199,13 +199,13 @@ end method;
 // it'd probably be a real bitch to implement...
 
 define inline method peek (stream :: <concatenated-stream>,
-                           #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $unsupplied)
  => element-of-eof :: <object>;
   do-combo-stream-function(peek, stream, on-end-of-stream);
 end method;
 
 define inline method read (stream :: <concatenated-stream>, n :: <integer>,
-                           #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $unsupplied)
  => sequence-or-eof :: <object>;
   do-combo-stream-function(read, stream, on-end-of-stream, n);
 end method;
@@ -214,7 +214,7 @@ define inline method read-into!
     (stream :: <concatenated-stream>, n :: <integer>,
      sequence :: <mutable-sequence>,
      #key start ::  <integer> = 0,
-          on-end-of-stream :: <object> = $not-supplied)
+          on-end-of-stream :: <object> = $unsupplied)
  => count-or-eof :: <object>;
   do-combo-stream-function(read-into!, stream, on-end-of-stream,
                            n, sequence, start: start);
@@ -229,7 +229,7 @@ end method;
 
 define inline method read-line
     (stream :: <concatenated-stream>,
-     #key on-end-of-stream :: <object> = $not-supplied)
+     #key on-end-of-stream :: <object> = $unsupplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   do-combo-stream-function(read-line, stream, on-end-of-stream);
 end method;
@@ -237,7 +237,7 @@ end method;
 define inline method read-line-into!
     (stream :: <concatenated-stream>, string :: <string>,
      #key start :: <integer> = 0, grow? :: <boolean> = #f,
-     on-end-of-stream :: <object> = $not-supplied)
+     on-end-of-stream :: <object> = $unsupplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
   do-combo-stream-function(read-line-into!, stream, on-end-of-stream, string,
                            start: start, grow?: grow?);

@@ -61,10 +61,10 @@ end class <multiD-array>;
 // General array methods
 
 define method make (c == <array>,
-                    #key dimensions: dimensions :: <sequence> = $not-supplied,
+                    #key dimensions: dimensions :: <sequence> = $unsupplied,
                     fill = #f)
  => array :: <array>;
-  if (dimensions == $not-supplied)
+  if (dimensions == $unsupplied)
     error("Need the dimensions or a size for an array");
   elseif (size(dimensions) = 1)
     make(<vector>, fill: fill, size: head(dimensions));
@@ -244,9 +244,9 @@ end method initialize;
 
 
 define method element (array :: <multiD-array>, index :: <integer>,
-                       #key default: default = $not-supplied)
+                       #key default: default = $unsupplied)
   => elt :: <object>;
-  if (default == $not-supplied)
+  if (default == $unsupplied)
     array.contents-slot[index];
   else
     element(array.contents-slot, index, default: default);

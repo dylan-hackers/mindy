@@ -116,7 +116,7 @@ define method find-method
   find-method(gf, as(<list>, specializers));
 end method find-method;
 
-define constant $not-supplied = pair(#f, #f);
+define constant $unsupplied = pair(#f, #f);
 
 define sealed generic instantiable? (type :: <type>) => answer :: <boolean>;
 

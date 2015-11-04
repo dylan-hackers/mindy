@@ -37,7 +37,7 @@ define open generic read-element (stream :: <stream>,
  => element-or-eof :: <object>;
 
 define method read-element (stream :: <buffered-stream>,
-                            #key on-end-of-stream :: <object> = $not-supplied)
+                            #key on-end-of-stream :: <object> = $unsupplied)
  => element-or-eof :: <object>;
   block ()
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
@@ -47,7 +47,7 @@ define method read-element (stream :: <buffered-stream>,
       buf.buffer-next := buf.buffer-next + 1;
       res;
     else
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
@@ -63,14 +63,14 @@ define sealed domain read-element(<buffered-byte-string-output-stream>);
 
 define sealed method read-element (stream :: <simple-sequence-stream>,
                                    #key on-end-of-stream :: <object>
-                                     = $not-supplied)
+                                     = $unsupplied)
  => element-or-eof :: <object>;
   block ()
     lock-stream(stream);
     check-stream-open(stream);
     check-input-stream(stream);
     if (stream.position == stream.stream-end)
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
@@ -139,14 +139,14 @@ define open generic peek (stream :: <stream>,
  => element-of-eof :: <object>;
 
 define method peek (stream :: <buffered-stream>,
-                    #key on-end-of-stream :: <object> = $not-supplied)
+                    #key on-end-of-stream :: <object> = $unsupplied)
  => element-of-eof :: <object>;
   block ()
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (buf)
       as(stream.stream-element-type, buf[buf.buffer-next]);
     else
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
@@ -161,14 +161,14 @@ define sealed domain peek(<fd-stream>);
 define sealed domain peek(<buffered-byte-string-output-stream>);
 
 define sealed method peek (stream :: <simple-sequence-stream>,
-                           #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $unsupplied)
  => element-or-eof :: <object>;
   block ()
     lock-stream(stream);
     check-stream-open(stream);
     check-input-stream(stream);
     if (stream.position == stream.stream-end)
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
@@ -188,12 +188,12 @@ define open generic read (stream :: <stream>, n :: <integer>,
  => sequence-or-eof :: <object>;
 
 define method read (stream :: <buffered-stream>, n :: <integer>,
-                    #key on-end-of-stream :: <object> = $not-supplied)
+                    #key on-end-of-stream :: <object> = $unsupplied)
  => sequence-or-eof :: <object>;
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~buf)
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
@@ -231,7 +231,7 @@ define method read (stream :: <buffered-stream>, n :: <integer>,
           // Check to see if we got everything we needed, else bail.
           if (n == result-stop)
             exit-loop(result);
-          elseif (on-end-of-stream == $not-supplied)
+          elseif (on-end-of-stream == $unsupplied)
             error(make(<incomplete-read-error>,
                        stream: stream,
                        sequence: copy-sequence(result, end: result-stop),
@@ -251,7 +251,7 @@ define sealed domain read(<fd-stream>, <integer>);
 define sealed domain read(<buffered-byte-string-output-stream>, <integer>);
 
 define sealed method read (stream :: <simple-sequence-stream>, n :: <integer>,
-                           #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $unsupplied)
  => sequence-or-eof :: <object>;
   block ()
     lock-stream(stream);
@@ -259,13 +259,13 @@ define sealed method read (stream :: <simple-sequence-stream>, n :: <integer>,
     check-input-stream(stream);
     let available :: <integer> = stream.stream-end - stream.position;
     if (available == 0)
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
       end if;
     elseif (available < n)
-      if (on-end-of-stream ~== $not-supplied)
+      if (on-end-of-stream ~== $unsupplied)
         on-end-of-stream;
       else
         let inc-seq = make(type-for-copy(stream.contents), size: available);
@@ -302,13 +302,13 @@ define method read-into!
      n :: <integer>,
      sequence :: <mutable-sequence>,
      #key start ::  <integer> = 0,
-          on-end-of-stream :: <object> = $not-supplied)
+          on-end-of-stream :: <object> = $unsupplied)
  => count-or-eof :: <object>;
   block (exit-loop)
     let buf :: false-or(<buffer>) = get-input-buffer(stream);
     if (~buf)
       // Hit eos right away.
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
@@ -344,7 +344,7 @@ define method read-into!
             seq-stop := seq-start + available;
             buf-start := buf.buffer-next;
           else // We've reached the end of the stream
-            if (on-end-of-stream ~== $not-supplied)
+            if (on-end-of-stream ~== $unsupplied)
               exit-loop(on-end-of-stream);
             else
               let num-copied = seq-stop - start;
@@ -375,14 +375,14 @@ define sealed method read-into!
      n :: <integer>,
      sequence :: <mutable-sequence>,
      #key start ::  <integer> = 0,
-          on-end-of-stream :: <object> = $not-supplied)
+          on-end-of-stream :: <object> = $unsupplied)
  => count-or-eof :: <object>;
   block ()
     lock-stream(stream);
     check-stream-open(stream);
     check-input-stream(stream);
     if (stream.stream-position == stream.stream-end)
-      if (on-end-of-stream == $not-supplied)
+      if (on-end-of-stream == $unsupplied)
         error(make(<end-of-stream-error>, stream: stream));
       else
         on-end-of-stream;
@@ -391,7 +391,7 @@ define sealed method read-into!
     let available :: <integer> = (sequence.size - start);
     let num-elts :: <integer> = if (n > available) available else n end;
     if ((stream.stream-end - stream.position) < num-elts)
-      if (on-end-of-stream ~== $not-supplied)
+      if (on-end-of-stream ~== $unsupplied)
         on-end-of-stream;
       else
         let inc-size = stream.stream-end - stream.position;
@@ -498,7 +498,7 @@ end method stream-input-available?;
 ///
 define method read-to (stream :: <stream>, elemnt :: <object>,
                        #key on-end-of-stream :: <object>
-                              = $not-supplied,
+                              = $unsupplied,
                             test :: <function> = \==)
  => (sequence-or-eof :: <object>, found? :: <boolean>);
   // Call read with n = 1 just to see what type of sequence we want.
@@ -521,7 +521,7 @@ end method read-to;
 ///
 define method read-through (stream :: <stream>, elemnt :: <object>,
                             #key on-end-of-stream :: <object>
-                                   = $not-supplied,
+                                   = $unsupplied,
                                  test :: <function> = \==)
  => (sequence-or-eof :: <object>, found? :: <boolean>);
   // Call read with n = 1 just to see what type of sequence we want.

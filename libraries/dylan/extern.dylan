@@ -275,13 +275,13 @@ end method size-setter;
 // should use pointer-value instead.
 //
 define method element
-    (vec :: <c-string>, index :: <integer>, #key default = $not-supplied)
+    (vec :: <c-string>, index :: <integer>, #key default = $unsupplied)
  => (result :: <character>);
   let sz = vec.size;
   case
     index >= 0 & index < sz =>
       pointer-value(vec, index: index);
-    default == $not-supplied =>
+    default == $unsupplied =>
       error("No such element in %=: %=", vec, index);
     otherwise =>
       default;

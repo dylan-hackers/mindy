@@ -391,12 +391,12 @@ end method;
 // signalled.
 //
 define method element (range :: <bounded-range>, key :: <integer>,
-                       #key default = $not-supplied)
+                       #key default = $unsupplied)
       => range-element :: <real>;
    case
       (key >= 0) & (key < range.range-size) =>
          range.range-from + (key * range.range-by);
-      (default == $not-supplied) =>
+      (default == $unsupplied) =>
          error ("No such element in %=: %d", range, key);
       otherwise =>
          default;
@@ -404,12 +404,12 @@ define method element (range :: <bounded-range>, key :: <integer>,
 end method;
 //
 define method element (range :: <unbounded-range>, key :: <integer>,
-                       #key default = $not-supplied)
+                       #key default = $unsupplied)
       => range-element :: <real>;
    case
       (key >= 0) =>
          range.range-from + (key * range.range-by);
-      (default == $not-supplied) =>
+      (default == $unsupplied) =>
          error ("No such element in %=: %d", range, key);
       otherwise =>
          default;
@@ -804,7 +804,7 @@ end method;
 // Returns the element at RANGE-SIZE - 1.  Signals an error for
 // unbounded ranges.
 //
-define method last (range :: <bounded-range>, #key default = $not-supplied)
+define method last (range :: <bounded-range>, #key default = $unsupplied)
  => last-elt :: <object>;
    element (range, range.range-size - 1, default: default)
 end method;

@@ -61,8 +61,8 @@ define constant ignore =
 // If the given key is present in the collection, return #t and the value
 // associated with the key.  Otherwise, return #f and an undefined value.
 //
-// Can't use $not-supplied, because we're passing undefined as an
-// argument to element(), which itself probably uses $not-supplied..
+// Can't use $unsupplied, because we're passing undefined as an
+// argument to element(), which itself probably uses $unsupplied..
 //
 define constant undefined = pair(#f, #f);
 define constant key-exists? =

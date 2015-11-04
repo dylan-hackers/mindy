@@ -374,10 +374,10 @@ end method size-setter;
 // to the desired element and take that as our starting point.
 //
 define method element (deque :: <deque>, key :: <integer>,
-                       #key default = $not-supplied) => elt :: <object>;
+                       #key default = $unsupplied) => elt :: <object>;
   let sz = deque.size;
   if (key < 0 | key >= sz)
-    if (default == $not-supplied) error("No such element in %=: %d", deque, key)
+    if (default == $unsupplied) error("No such element in %=: %d", deque, key)
     else default
     end if;
   elseif (key + key > sz)        // closer to end than start
@@ -801,13 +801,13 @@ end method reverse!;
 // Returns the last element of the deque.  This is more efficient because
 // the last element of a deque can be accessed directly.
 //
-define method last (deque :: <deque>, #key default = $not-supplied)
+define method last (deque :: <deque>, #key default = $unsupplied)
  => last-elt :: <object>;
   let deque-tail = deque-tail(deque);
   case
     deque-tail =>
       deque-element-data(deque-tail);
-    default == $not-supplied =>
+    default == $unsupplied =>
       error("No such element in %=:  last.", deque);
     otherwise =>
       default;

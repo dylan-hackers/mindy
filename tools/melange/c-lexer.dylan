@@ -769,13 +769,13 @@ end method copy-sequence;
 
 define sealed inline method element
     (string :: <long-byte-string>, key :: <integer>,
-     #key default = $not-supplied)
+     #key default = $unsupplied)
  => (result :: <byte-character>);
   if (key >= 0 & key < string.size)
     let (component, index) = floor/(key, $long-string-component-size);
     let substr :: <byte-string> =  string.components[component];
     substr[index];
-  elseif (default == $not-supplied)
+  elseif (default == $unsupplied)
     error("No such element in %=: %=", string, key);
   else
     default;

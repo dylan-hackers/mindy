@@ -147,7 +147,7 @@ define module extras
     *debug-output*, *warning-output*, *inspect-function*, *xinspect-function*,
     <format-string-condition>, report-condition,
     condition-format, condition-force-output,
-    ratio, integer-length, $not-supplied, false-or, instantiable?,
+    ratio, integer-length, $unsupplied, false-or, instantiable?,
     add-debug-variable;
 end;
 

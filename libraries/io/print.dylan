@@ -346,10 +346,10 @@ define generic print (object, stream :: <stream>,
     => ();
 
 
-define constant <boolean-or-not-supplied>
-  = type-union(<boolean>, singleton($not-supplied));
-define constant <integer-or-false-or-not-supplied>
-  = type-union(<integer>, one-of(#f, $not-supplied));
+define constant <boolean-or-unsupplied>
+  = type-union(<boolean>, singleton($unsupplied));
+define constant <integer-or-false-or-unsupplied>
+  = type-union(<integer>, one-of(#f, $unsupplied));
 
 /// Print -- Method for Exported Interface.
 ///
@@ -357,12 +357,12 @@ define constant <integer-or-false-or-not-supplied>
 /// <print-stream> to hold the values for the requested print operation.
 ///
 define method print (object, stream :: <stream>,
-                     #key level :: <integer-or-false-or-not-supplied>
-                            = $not-supplied,
-                          length :: <integer-or-false-or-not-supplied>
-                            = $not-supplied,
-                          circle? :: <boolean-or-not-supplied> = $not-supplied,
-                          pretty? :: <boolean-or-not-supplied> = $not-supplied)
+                     #key level :: <integer-or-false-or-unsupplied>
+                            = $unsupplied,
+                          length :: <integer-or-false-or-unsupplied>
+                            = $unsupplied,
+                          circle? :: <boolean-or-unsupplied> = $unsupplied,
+                          pretty? :: <boolean-or-unsupplied> = $unsupplied)
     => ();
   block ()
     //
@@ -378,10 +378,10 @@ define method print (object, stream :: <stream>,
     let p-stream = make-a-print-stream(stream);
     //
     // Set slots with those values supplied by the user.
-    if (~ (level == $not-supplied)) p-stream.print-level := level end;
-    if (~ (length == $not-supplied)) p-stream.print-length := length end;
-    if (~ (circle? == $not-supplied)) p-stream.print-circle? := circle? end;
-    if (~ (pretty? == $not-supplied)) p-stream.print-pretty? := pretty? end;
+    if (~ (level == $unsupplied)) p-stream.print-level := level end;
+    if (~ (length == $unsupplied)) p-stream.print-length := length end;
+    if (~ (circle? == $unsupplied)) p-stream.print-circle? := circle? end;
+    if (~ (pretty? == $unsupplied)) p-stream.print-pretty? := pretty? end;
     //
     // When printing circularly, we first print to a "null stream" so that we
     // can find the circular references.
@@ -422,12 +422,12 @@ end method;
 /// <print-stream> to hold the values for the requested print operation.
 ///
 define method print (object, stream :: <print-stream>,
-                     #key level :: <integer-or-false-or-not-supplied>
-                            = $not-supplied,
-                          length :: <integer-or-false-or-not-supplied>
-                            = $not-supplied,
-                          circle? :: <boolean-or-not-supplied> = $not-supplied,
-                          pretty? :: <boolean-or-not-supplied> = $not-supplied)
+                     #key level :: <integer-or-false-or-unsupplied>
+                            = $unsupplied,
+                          length :: <integer-or-false-or-unsupplied>
+                            = $unsupplied,
+                          circle? :: <boolean-or-unsupplied> = $unsupplied,
+                          pretty? :: <boolean-or-unsupplied> = $unsupplied)
     => ();
   let save-level = stream.print-level;
   let save-length = stream.print-length;
@@ -440,7 +440,7 @@ define method print (object, stream :: <print-stream>,
     // continue printing with the minimum effect of the two levels, assuming
     // that is the most careful thing to do.
     case
-      (level == $not-supplied) => #f;   // Case is broken in Mindy.
+      (level == $unsupplied) => #f;   // Case is broken in Mindy.
       (save-level) =>
         stream.print-level := min(save-level, (level + stream.print-depth));
       otherwise => stream.print-level := level;
@@ -449,14 +449,14 @@ define method print (object, stream :: <print-stream>,
     // continue printing with the minimum of the two lengths, assuming that
     // is the most careful thing to do.
     case
-      (length == $not-supplied) => #f;   // Case is broken in Mindy.
+      (length == $unsupplied) => #f;   // Case is broken in Mindy.
       (save-length) => stream.print-length := min(save-length, length);
       otherwise => stream.print-length := length;
     end;
     // We never turn off circular printing, but if a recursive call to print
     // turns circular printing on, we print that object circularly.
     case
-      ((circle? == $not-supplied) | (~ circle?)) =>
+      ((circle? == $unsupplied) | (~ circle?)) =>
         #f;   // Case is broken in Mindy.
       (~ save-circle?) =>
         stream.print-circle? := #t;
@@ -466,7 +466,7 @@ define method print (object, stream :: <print-stream>,
     // passed to print.  The assumption is that there is no harm in turning
     // it off for some object, and because it is odd to request no pretty
     // printing, the calling code probably has good reason to turn it off.
-    if (~ (pretty? == $not-supplied)) stream.print-pretty? := pretty? end;
+    if (~ (pretty? == $unsupplied)) stream.print-pretty? := pretty? end;
     //
     // Determine whether, and how, to print object.
     maybe-print-object(object, stream);

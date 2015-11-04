@@ -75,9 +75,9 @@ end method;
 
 define inline method read-element
     (stream :: <wrapper-stream>,
-     #key on-end-of-stream :: <object> = $not-supplied)
+     #key on-end-of-stream :: <object> = $unsupplied)
  => element-or-eof :: <object>;
-  if (on-end-of-stream == $not-supplied)
+  if (on-end-of-stream == $unsupplied)
     read-element(stream.inner-stream);
   else
     read-element(stream.inner-stream, on-end-of-stream: on-end-of-stream);
@@ -95,9 +95,9 @@ end method;
 //end method;
 
 define inline method peek (stream :: <wrapper-stream>,
-                           #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $unsupplied)
  => element-of-eof :: <object>;
-  if (on-end-of-stream == $not-supplied)
+  if (on-end-of-stream == $unsupplied)
     peek(stream.inner-stream);
   else
     peek(stream.inner-stream, on-end-of-stream: on-end-of-stream);
@@ -106,9 +106,9 @@ end method;
 
 
 define inline method read (stream :: <wrapper-stream>, n :: <integer>,
-                           #key on-end-of-stream :: <object> = $not-supplied)
+                           #key on-end-of-stream :: <object> = $unsupplied)
  => sequence-or-eof :: <object>;
-  if (on-end-of-stream == $not-supplied)
+  if (on-end-of-stream == $unsupplied)
     read(stream.inner-stream, n);
   else
     read(stream.inner-stream, n, on-end-of-stream: on-end-of-stream);
@@ -120,9 +120,9 @@ define inline method read-into!
      n :: <integer>,
      sequence :: <mutable-sequence>,
      #key start ::  <integer> = 0,
-          on-end-of-stream :: <object> = $not-supplied)
+          on-end-of-stream :: <object> = $unsupplied)
  => count-or-eof :: <object>;
-  if (on-end-of-stream == $not-supplied)
+  if (on-end-of-stream == $unsupplied)
     read-into!(stream.inner-stream, n, sequence, start: start);
   else
     read-into!(stream.inner-stream, n, sequence, start: start,
@@ -166,9 +166,9 @@ end method;
 
 define inline method read-line
     (stream :: <wrapper-stream>,
-     #key on-end-of-stream :: <object> = $not-supplied)
+     #key on-end-of-stream :: <object> = $unsupplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
-  if (on-end-of-stream == $not-supplied)
+  if (on-end-of-stream == $unsupplied)
     read-line(stream.inner-stream);
   else
     read-line(stream.inner-stream, on-end-of-stream: on-end-of-stream);
@@ -178,9 +178,9 @@ end method;
 define inline method read-line-into!
     (stream :: <wrapper-stream>, string :: <string>,
      #key start :: <integer> = 0, grow? :: <boolean> = #f,
-     on-end-of-stream :: <object> = $not-supplied)
+     on-end-of-stream :: <object> = $unsupplied)
  => (string-or-eof :: <object>, newline? :: <boolean>);
-  if (on-end-of-stream == $not-supplied)
+  if (on-end-of-stream == $unsupplied)
       read-line-into!(stream.inner-stream, string, start: start, grow?: grow?);
   else
       read-line-into!(stream.inner-stream, string, start: start, grow?: grow?,

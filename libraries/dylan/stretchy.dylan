@@ -125,12 +125,12 @@ end method dimensions;
 
 
 define method element(ssv :: <simple-stretchy-vector>, key :: <integer>,
-                      #key default = $not-supplied)
+                      #key default = $unsupplied)
  => elt :: <object>;
   case
     key >= 0 & key < size(ssv) =>
       ssv-data(ssv)[key];
-    default == $not-supplied =>
+    default == $unsupplied =>
       error("Element %d not in %=", key, ssv);
     otherwise =>
       default;

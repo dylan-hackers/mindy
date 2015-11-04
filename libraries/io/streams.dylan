@@ -40,10 +40,10 @@ define constant $default-buffer-size = 1024 * 64;
 //
 define constant <locator> = <byte-string>;
 
-// $not-supplied -- Internal.
+// $unsupplied -- Internal.
 // Used with on-end-of-stream keyword.
 //
-define constant $not-supplied = "not-supplied-no-siree";
+define constant $unsupplied = "unsupplied-no-siree";
 
 // In mindy and d2c <character> is equivalent to unicode character.
 //
@@ -212,21 +212,21 @@ define sealed method initialize
      #key contents :: <sequence>, // Default depends on type of stream
           direction: dir :: one-of(#"input", #"output", #"input-output")
             = #"input",
-          start :: type-union(singleton($not-supplied), <integer>)
-            = $not-supplied, // = 0,
-          end: stop :: type-union(singleton($not-supplied), <integer>)
-            = $not-supplied, // = contents.size,
+          start :: type-union(singleton($unsupplied), <integer>)
+            = $unsupplied, // = 0,
+          end: stop :: type-union(singleton($unsupplied), <integer>)
+            = $unsupplied, // = contents.size,
      #all-keys)
  => ();
   // Make sure they didn't try and give us start and stop on an output stream
-  if (start ~== $not-supplied)
+  if (start ~== $unsupplied)
     if (dir ~== #"input")
       error("Keyword start: only valid for input-only streams -- %=", stream);
     end;
   else
     start := 0;
   end;
-  if (stop ~== $not-supplied)
+  if (stop ~== $unsupplied)
     if (dir ~== #"input")
       error("Keyword stop: only valid for input-only streams -- %=", stream);
     end;
@@ -257,10 +257,10 @@ define sealed method make
     (stream == <byte-string-stream>,
      #next next-method,
      #rest all-parameters,
-     #key contents :: type-union(singleton($not-supplied), <byte-string>) = $not-supplied,
+     #key contents :: type-union(singleton($unsupplied), <byte-string>) = $unsupplied,
      #all-keys)
  => (result :: <byte-string-stream>)
-  if(contents == $not-supplied)
+  if(contents == $unsupplied)
     apply(next-method, stream, contents:, make(<byte-string>), all-parameters);
   else
     next-method();
@@ -271,10 +271,10 @@ define sealed method make
     (stream == <unicode-string-stream>,
      #next next-method,
      #rest all-parameters,
-     #key contents :: type-union(singleton($not-supplied), <unicode-string>) = $not-supplied,
+     #key contents :: type-union(singleton($unsupplied), <unicode-string>) = $unsupplied,
      #all-keys)
  => (result :: <unicode-string-stream>)
-  if(contents == $not-supplied)
+  if(contents == $unsupplied)
     apply(next-method, stream, contents:, make(<unicode-string>), all-parameters);
   else
     next-method();

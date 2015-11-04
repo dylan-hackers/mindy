@@ -91,8 +91,7 @@ end module;
 define module common-extensions
   use dylan;
   use extensions,
-    rename: {$not-supplied => $unsupplied,
-             <never-returns> => <bottom>,
+    rename: {<never-returns> => <bottom>,
              on-exit => register-application-exit-function},
     export: {$unsupplied,
              \assert,
