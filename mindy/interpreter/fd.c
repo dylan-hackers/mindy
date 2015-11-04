@@ -107,8 +107,8 @@ static DWORD input_checker (LPDWORD param)
         /* Now loop until we complete a read without getting a
            broken pipe error */
         /* read 0 bytes, block if not available */
-        read_result = ReadFile(handle, &small_buffer,
-                               0, &bytes_read, NULL);
+        read_result = PeekConsoleInput(handle, &small_buffer,
+                                       0, &bytes_read);
         if (!read_result) {
             the_error = GetLastError();
             if (the_error != ERROR_BROKEN_PIPE) {
