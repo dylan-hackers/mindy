@@ -121,7 +121,7 @@ define module Builtin-Stuff
     find-c-function, constrain-c-function,
     sin, cos, tan, sincos, asin, acos, atan, atan2,
     sinh, cosh, tanh, asinh, acosh, atanh,
-    exp, log, sqrt,
+    exp, log, logn, sqrt,
     $single-pi, $single-e, $double-pi, $double-e,
     init-keyword, keyword-required?,
     <name>, <namespace>, <module>, <library>, <binding>,
@@ -421,7 +421,7 @@ define module %Transcendental
   use Builtin-stuff,
     import: { sin, cos, tan, sincos, asin, acos, atan, atan2,
               sinh, cosh, tanh, asinh, acosh, atanh,
-              exp, log, sqrt,
+              exp, log, logn, sqrt,
               $single-pi, $single-e, $double-pi, $double-e },
     export: all;
 end module %Transcendental;

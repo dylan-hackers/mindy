@@ -395,6 +395,28 @@ The following names are exported from the ``Transcendental`` module of the
    :seealso:
 
      - :gf:`exp`
+     - :gf:`logn`
+
+.. generic-function:: logn
+
+   Returns the logarithm of its argument with the provided base.
+
+   :signature: log x base => y
+
+   :parameter x: An instance of type :drm:`<float>`.
+   :parameter base: An instance of type :drm:`<float>`.
+   :value y: An instance of type :drm:`<float>`.
+
+   :description:
+
+     Returns the natural logarithm of ``x`` to the base ``base``. If
+     x <= 0 <= 1, an error is signalled. The floating point precision
+     of the result is given by the precision of ``x``.
+
+   :seealso:
+
+     - :gf:`exp`
+     - :gf:`log`
 
 .. generic-function:: exp
 
@@ -415,6 +437,7 @@ The following names are exported from the ``Transcendental`` module of the
 
      - :gf:`^`
      - :gf:`log`
+     - :gf:`logn`
 
 .. generic-function:: ^
 

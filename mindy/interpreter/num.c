@@ -1942,6 +1942,16 @@ static void dylan_df_sincos(obj_t self, struct thread *thread, obj_t *args)
     do_return(thread, old_sp, old_sp);
 }
 
+static obj_t dylan_sf_logn(obj_t sf1, obj_t sf2)
+{
+    return make_single(logf(single_value(sf1)) / logf(single_value(sf2)));
+}
+
+static obj_t dylan_df_logn(obj_t df1, obj_t df2)
+{
+    return make_double(log(double_value(df1)) / log(double_value(df2)));
+}
+
 static obj_t dylan_sf_atan2 (obj_t sf1, obj_t sf2)
 {
     return make_single((float) atan2(single_value(sf1),
@@ -2480,6 +2490,13 @@ void init_num_functions(void)
                              false, false)->value,
                make_raw_method("sincos", df, false, obj_False, false,
                                two_dfs, obj_False, dylan_df_sincos));
+
+    define_generic_function("logn", two_floats, false, obj_False, false,
+                            any_float, obj_False);
+    define_method("logn", two_sfs, false, obj_False, false,
+                  obj_SingleFloatClass, dylan_sf_logn);
+    define_method("logn", two_dfs, false, obj_False, false,
+                  obj_DoubleFloatClass, dylan_df_logn);
 
     define_generic_function("atan2", two_floats, false, obj_False, false,
                             any_float, obj_False);
