@@ -1767,7 +1767,7 @@ void describe(obj_t thing)
 
         for (slots=DC(class)->all_slots; slots != obj_Nil; slots=TAIL(slots)) {
             obj_t slot = HEAD(slots);
-            int index, dummy;
+            int index;
             obj_t value = NULL;
 
             fputs(sym_name(SD(slot)->name), stdout);
@@ -1799,8 +1799,7 @@ void describe(obj_t thing)
                 printf(": ");
                 print(value);
             }
-          after_value_printing:
-            dummy = 0;    /* Without this line, a few compilers will choke */
+          after_value_printing: ;
         }
     }
 }
