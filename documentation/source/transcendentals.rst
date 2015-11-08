@@ -100,8 +100,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the sine of its argument. The floating point precision of the
-     result is given by the precision of ``x``. The result is a single-float
-     if ``x`` is an integer.
+     result is given by the precision of ``x``.
 
    :seealso:
 
@@ -122,8 +121,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the sine and cosine of its argument. The floating point precision of the
-     result is given by the precision of ``x``. The result is a single-float
-     if ``x`` is an integer.
+     result is given by the precision of ``x``.
 
    :seealso:
 
@@ -143,8 +141,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the cosine of its argument. The floating point precision of the
-     result is given by the precision of ``x``. The result is a single-float
-     if ``x`` is an integer.
+     result is given by the precision of ``x``.
 
    :seealso:
 
@@ -164,8 +161,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the tangent of its argument. The floating point precision of the
-     result is given by the precision of ``x``. The result is a single-float
-     if ``x`` is an integer.
+     result is given by the precision of ``x``.
 
    :seealso:
 
@@ -186,8 +182,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the arc sine of its argument. The floating point precision of
-     the result is given by the precision of ``x``. The result is a
-     single-float if ``x`` is an integer.
+     the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -207,8 +202,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the arc cosine of its argument. The floating point precision of
-     the result is given by the precision of ``x``. The result is a
-     single-float if ``x`` is an integer.
+     the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -228,8 +222,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the arc tangent of its argument. The floating point precision of
-     the result is given by the precision of *x*. The result is a
-     single-float if *x* is an integer.
+     the result is given by the precision of *x*.
 
    :seealso:
 
@@ -253,7 +246,7 @@ The following names are exported from the ``Transcendental`` module of the
      the angle falls in.
 
      The floating point precision of the result is given by the precision of
-     ``x``/``y``. The result is a single-float if ``x/y`` is an integer.
+     ``x``/``y``.
 
 
 .. generic-function:: sinh
@@ -268,8 +261,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the hyperbolic sine of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
+     precision of the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -288,8 +280,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the hyperbolic cosine of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
+     precision of the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -308,8 +299,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the hyperbolic tangent of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
+     precision of the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -328,8 +318,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the hyperbolic arc sine of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
+     precision of the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -348,8 +337,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the hyperbolic arc cosine of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
+     precision of the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -368,8 +356,7 @@ The following names are exported from the ``Transcendental`` module of the
    :description:
 
      Returns the hyperbolic arc tangent of its argument. The floating point
-     precision of the result is given by the precision of ``x``. The result is
-     a single-float if ``x`` is an integer.
+     precision of the result is given by the precision of ``x``.
 
    :seealso:
 
@@ -389,8 +376,7 @@ The following names are exported from the ``Transcendental`` module of the
 
      Returns the natural logarithm of ``x`` to the base e. If x <= 0 <= 1, an
      error is signalled. The floating point precision of the result is given
-     by the precision of ``x``. The result is a single-float if ``x`` is an
-     integer.
+     by the precision of ``x``.
 
    :seealso:
 
@@ -482,7 +468,7 @@ The following names are exported from the ``Transcendental`` module of the
 
      Returns the square root of x. If x is less than zero an error is
      signalled. The floating point precision of the result is given by the
-     precision of ``x``. The result is a single-float if ``x`` is an integer.
+     precision of ``x``.
 
    :seealso:
 
