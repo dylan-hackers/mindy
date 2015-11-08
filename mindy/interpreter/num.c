@@ -1046,6 +1046,11 @@ static obj_t dylan_fi_fi_logxor(obj_t x, obj_t y)
     return make_fixnum(fixnum_value(x) ^ fixnum_value(y));
 }
 
+static obj_t dylan_fi_isqrt(obj_t x)
+{
+    return make_fixnum((int)sqrtf((float)fixnum_value(x)));
+}
+
 
 /* Dylan Routines -- Extended Integers */
 
@@ -2227,6 +2232,8 @@ void init_num_functions(void)
                   obj_FixnumClass, dylan_fi_lognot);
     define_method("binary-logxor", two_fis, false, obj_False, false,
                   obj_FixnumClass, dylan_fi_fi_logxor);
+    define_method("isqrt", fi, false, obj_False, false,
+                  obj_FixnumClass, dylan_fi_isqrt);
 
     define_method("=", two_eis, false, obj_False, false,
                   obj_BooleanClass, dylan_ei_ei_equal);
