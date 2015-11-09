@@ -424,4 +424,5 @@ define module %Transcendental
               exp, log, logn, sqrt, isqrt,
               $single-pi, $single-e, $double-pi, $double-e },
     export: all;
+  export ilog2;
 end module %Transcendental;

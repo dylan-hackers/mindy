@@ -51,5 +51,6 @@ define method \^ (num1 :: <double-float>, num2 :: <single-float>)
   num1 ^ as(<double-float>, num2);
 end method;
 
-
-
+define function ilog2 (x :: <integer>) => (result :: <integer>)
+  truncate(log(as(<single-float>, x)) / log(2.0s0))
+end function ilog2;

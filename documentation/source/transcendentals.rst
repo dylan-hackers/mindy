@@ -381,6 +381,7 @@ The following names are exported from the ``Transcendental`` module of the
    :seealso:
 
      - :gf:`exp`
+     - :func:`ilog2`
      - :gf:`logn`
 
 .. generic-function:: logn
@@ -402,6 +403,30 @@ The following names are exported from the ``Transcendental`` module of the
    :seealso:
 
      - :gf:`exp`
+     - :func:`ilog2`
+     - :gf:`log`
+
+.. function:: ilog2
+
+   :summary:
+     Returns the base two logarithm of its argument, truncated to an
+     integer.
+
+   :signature: ilog2 x => y
+
+   :parameter x: An instance of :drm:`<integer>`.
+   :value y: An instance of :drm:`<integer>`.
+
+   :description:
+
+     Returns the integer base two logarithm of ``x``, that is the
+     greatest integer less than or equal to the exact base two logarithm
+     of ``x``.
+
+   :seealso:
+
+     - :gf:`exp`
+     - :func:`logn`
      - :gf:`log`
 
 .. generic-function:: exp
@@ -422,6 +447,7 @@ The following names are exported from the ``Transcendental`` module of the
    :seealso:
 
      - :gf:`^`
+     - :func:`ilog2`
      - :gf:`log`
      - :gf:`logn`
 
