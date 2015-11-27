@@ -1199,7 +1199,7 @@ obj_t make_c_function(obj_t debug_name, void *pointer)
     C_FUNCTION(res)->restp = true;
     C_FUNCTION(res)->keywords = obj_False;
     C_FUNCTION(res)->all_keys = false;
-    C_FUNCTION(res)->result_types = obj_ObjectClass;
+    C_FUNCTION(res)->result_types = list1(obj_ObjectClass);
     C_FUNCTION(res)->more_results_type = obj_False;
     C_FUNCTION(res)->pointer = pointer;
     C_FUNCTION(res)->specializers = obj_Nil;
