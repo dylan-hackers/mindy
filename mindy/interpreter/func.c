@@ -424,6 +424,7 @@ static bool
         obj_t arg_class = *cached_classes++;
         obj_t specializer = HEAD(specializers);
 
+        // TODO: limited classes support here!
         /* arg_class may be either a singleton, a limited_int, or a class.
            This stuff has been worked out on a case by case basis.  It could
            certainly be made clearer, but this could potentially reduce

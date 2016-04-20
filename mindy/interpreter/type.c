@@ -42,9 +42,12 @@
 #include "error.h"
 #include "print.h"
 #include "def.h"
+#include "vec.h"
+#include "thread.h"
+#include "func.h"
 
 obj_t obj_TypeClass = 0;
-static obj_t obj_SingletonClass, obj_LimIntClass;
+static obj_t obj_SingletonClass, obj_LimIntClass, obj_LimClassClass;
 static obj_t obj_SubclassClass, obj_UnionClass, obj_NoneOfClass;
 
 struct singleton {
@@ -57,7 +60,7 @@ struct singleton {
 
 struct subclass {
     obj_t class;
-    enum type_Id type_id;
+    enum type_Id type_id, sub_type_id;
     obj_t of;
 };
 
@@ -71,6 +74,19 @@ struct lim_int {
 };
 
 #define LIMINT(x) obj_ptr(struct lim_int *, x)
+
+struct lim_class {
+    obj_t class;
+    enum type_Id type_id;
+    obj_t base_class;
+    obj_t restriction_vector;
+    obj_t next;
+};
+
+#define LIMCLASS(x) obj_ptr(struct lim_class *, x)
+#define LIMCLASSOF(x) CLASS(LIMCLASS(x)->base_class)
+#define LIM_CLASS_TABLE_SIZE 64
+static obj_t limited_classes[LIM_CLASS_TABLE_SIZE];
 
 struct union_type {
     obj_t class;
@@ -88,6 +104,10 @@ struct none_of_type {
 };
 
 #define NONEOF(x) obj_ptr(struct none_of_type *, x)
+
+static struct variable *var_EqualsMethod = NULL;
+static struct variable *var_LimInstanceMethod = NULL;
+static struct variable *var_LimSubtypeMethod = NULL;
 
 
 /* instancep */
@@ -115,7 +135,7 @@ static MINDY_INLINE bool class_instancep(obj_t thing, obj_t class)
 
 static MINDY_INLINE bool subclass_instancep(obj_t thing, obj_t subclass)
 {
-    return instancep(thing, obj_ClassClass)
+    return (instancep(thing, obj_ClassClass) || instancep(thing, obj_LimClassClass))
         && subtypep(thing, SUBCLASS(subclass)->of);
 }
 
@@ -168,6 +188,31 @@ static MINDY_INLINE bool none_of_instancep(obj_t thing, obj_t class)
     return true;
 }
 
+static MINDY_INLINE bool limclass_instancep(obj_t thing, obj_t type)
+{
+    if (! class_instancep(thing, LIMCLASS(type)->base_class))
+    {
+        format("Short-circuiting instancep(%=, %=) -> #f\n", thing, type);
+        return false;
+    }
+    if (subtypep(object_class(thing), type))
+    {
+        format("Short-circuiting instancep(%=, %=) -> #t\n", thing, type);
+        return true;
+    }
+
+    format("Doing full instance check on object %= of type %=.\n", thing, object_class(thing));
+
+    obj_t lim_instance_values = invoke_simple_method(NULL, var_LimInstanceMethod->value,
+                                                     list2(thing, type));
+    format("slow instancep(%=, %=) -> %=\n", thing, type, SOVEC(lim_instance_values)->contents[0]);
+    if ( SOVEC(lim_instance_values)->contents[0] == obj_True )
+        return true;
+    else
+        return false;
+}
+
+
 bool instancep(obj_t thing, obj_t type)
 {
     enum type_Id type_id = TYPE(type)->type_id;
@@ -193,6 +238,9 @@ bool instancep(obj_t thing, obj_t type)
         break;
       case id_NoneOf:
         return none_of_instancep(thing, type);
+        break;
+      case id_LimClass:
+        return limclass_instancep(thing, type);
         break;
     }
     lose("instancep dispatch didn't do anything.");
@@ -341,6 +389,29 @@ static MINDY_INLINE bool lim_noneof_subtypep(obj_t type, obj_t n)
     return true;
 }
 
+static MINDY_INLINE bool limclass_class_subtypep(obj_t type1, obj_t type2)
+{
+    return class_class_subtypep(LIMCLASS(type1)->base_class, type2);
+}
+
+static MINDY_INLINE bool limclass_limclass_subtypep(obj_t type1, obj_t type2)
+{
+    if ( ! limclass_class_subtypep(type1, LIMCLASS(type2)->base_class) )
+        return false;
+
+    // Limited class with no arguments is the super type of all other
+    // limited classes with the same base class
+    if ( SOVEC(LIMCLASS(type2)->restriction_vector)->length == 0 )
+        return true;
+    
+    obj_t lim_subtype_values = invoke_simple_method(NULL, var_LimSubtypeMethod->value,
+                                                    list2(type1, type2));
+    if ( SOVEC(lim_subtype_values)->contents[0] == obj_True )
+        return true;
+    else
+        return false;
+}
+
 bool subtypep(obj_t type1, obj_t type2)
 {
     int type1_id, type2_id;
@@ -363,6 +434,7 @@ bool subtypep(obj_t type1, obj_t type2)
           case id_LimFixnum:
           case id_LimBignum:
           case id_NoneOf:
+          case id_LimClass:
             return sing_type_subtypep(type1, type2);
             break;
           case id_Union:
@@ -384,6 +456,7 @@ bool subtypep(obj_t type1, obj_t type2)
           case id_LimFixnum:
           case id_LimBignum:
           case id_NoneOf:
+          case id_LimClass:
             return never_subtypep(type1, type2);
             break;
         };
@@ -401,7 +474,8 @@ bool subtypep(obj_t type1, obj_t type2)
           case id_LimFixnum:
           case id_LimBignum:
           case id_NoneOf:
-            return never_subtypep(type1, type2);
+          case id_LimClass:
+            return subclass_class_subtypep(type1, LIMCLASS(type2)->base_class);
             break;
           case id_Union:
             return type_union_subtypep(type1, type2);
@@ -416,6 +490,7 @@ bool subtypep(obj_t type1, obj_t type2)
             break;
           case id_Class:
           case id_SubClass:
+          case id_LimClass:
             return limfix_type_subtypep(type1, type2);
             break;
           case id_LimFixnum:
@@ -440,6 +515,7 @@ bool subtypep(obj_t type1, obj_t type2)
             break;
           case id_Class:
           case id_SubClass:
+          case id_LimClass:
             return limbig_type_subtypep(type1, type2);
             break;
           case id_LimFixnum:
@@ -461,6 +537,22 @@ bool subtypep(obj_t type1, obj_t type2)
         break;
       case id_NoneOf:
         return noneof_type_subtypep(type1, type2);
+        break;
+      case id_LimClass:
+        switch (type2_id) {
+            /* limclass x mumble methods */
+          case id_Class:
+            return limclass_class_subtypep(type1, type2);
+          case id_SubClass:
+          case id_Singleton:
+          case id_LimFixnum:
+          case id_LimBignum:
+          case id_Union:
+          case id_NoneOf:
+            return never_subtypep(type1, type2);
+          case id_LimClass:
+            return limclass_limclass_subtypep(type1, type2);
+        }
         break;
     }
     lose("subtypep dispatch didn't do anything.");
@@ -576,48 +668,54 @@ static bool noneof_type_overlapp(obj_t n, obj_t type)
     return overlapp(NONEOF(n)->base, type);
 }
 
-static bool (*overlapp_table[7][7])(obj_t t1, obj_t t2) = {
+static bool (*overlapp_table[8][8])(obj_t t1, obj_t t2) = {
     /* singleton x mumble methods */
     {
         sing_sing_subtypep, sing_type_subtypep, sing_type_subtypep,
         sing_type_subtypep, sing_type_subtypep, sing_type_subtypep,
-        sing_type_subtypep
+        sing_type_subtypep, sing_type_subtypep
     },
     /* class x mumble methods */
     {
         class_type_overlapp, class_class_overlapp, class_type_overlapp,
         class_type_overlapp, class_type_overlapp, class_type_overlapp,
-        class_type_overlapp
+        class_type_overlapp, class_type_overlapp
     },
     /* subclass x mumble methods */
     {
         subclass_type_overlapp, subclass_type_overlapp, subclass_type_overlapp,
         subclass_type_overlapp, subclass_type_overlapp, subclass_type_overlapp,
-        subclass_type_overlapp
+        subclass_type_overlapp, subclass_type_overlapp
     },
     /* limfix x mumble methods */
     {
         lim_type_overlapp, limfix_class_overlapp, never_subtypep,
         limfix_limfix_overlapp, never_subtypep, lim_type_overlapp,
-        lim_type_overlapp
+        lim_type_overlapp, never_subtypep
     },
     /* limbig x mumble methods */
     {
         lim_type_overlapp, limbig_class_overlapp, never_subtypep,
         never_subtypep, limbig_limbig_overlapp, lim_type_overlapp,
-        lim_type_overlapp
+        lim_type_overlapp, never_subtypep
     },
     /* union x mumble methods */
     {
         union_type_overlapp, union_type_overlapp, union_type_overlapp,
         union_type_overlapp, union_type_overlapp, union_type_overlapp,
-        union_type_overlapp
+        union_type_overlapp, union_type_overlapp
     },
     /* noneof x mumble methods */
     {
         noneof_type_overlapp, noneof_type_overlapp, noneof_type_overlapp,
         noneof_type_overlapp, noneof_type_overlapp, noneof_type_overlapp,
-        noneof_type_overlapp
+        noneof_type_overlapp, noneof_type_overlapp
+    },
+    /* TODO: limclass x mumble methods */
+    {
+        never_subtypep /* sing */, never_subtypep /* class */, never_subtypep /* subclass */,
+        never_subtypep /* limfix */, never_subtypep /* limbig */, never_subtypep /* union */,
+        never_subtypep /* noneof */, never_subtypep /* limclass */
     }
 };
 
@@ -658,6 +756,18 @@ obj_t subclass(obj_t of)
     obj_t res = alloc(obj_SubclassClass, sizeof(struct subclass));
 
     SUBCLASS(res)->type_id = id_SubClass;
+    SUBCLASS(res)->sub_type_id = id_Class;
+    SUBCLASS(res)->of = of;
+
+    return res;
+}
+
+obj_t sublimclass(obj_t of)
+{
+    obj_t res = alloc(obj_SubclassClass, sizeof(struct subclass));
+
+    SUBCLASS(res)->type_id = id_SubClass;
+    SUBCLASS(res)->sub_type_id = id_LimClass;
     SUBCLASS(res)->of = of;
 
     return res;
@@ -1119,10 +1229,145 @@ static obj_t dylan_limited_integer(obj_t class, obj_t min, obj_t max)
                       limited_bignum(min, max));
 }
 
+static void print_limclass(obj_t limclass)
+{
+    int idx;
+    obj_t restriction_vector = LIMCLASS(limclass)->restriction_vector;
+    printf("{limited "); //, sym_name(LIMCLASSOF(limclass)->debug_name));
+    prin1(LIMCLASS(limclass)->base_class);
+    for (idx = 0; idx < SOVEC(restriction_vector)->length; idx += 2)
+    {
+        printf(" %s: ", sym_name(SOVEC(restriction_vector)->contents[idx]));
+        prin1(SOVEC(restriction_vector)->contents[idx+1]);
+    }
+    putchar('}');
+}
+
+static int scav_limclass(struct object *o)
+{
+    struct lim_class *ptr = LIMCLASS(o);
+
+    scavenge(&ptr->next);
+    scavenge(&ptr->base_class);
+    scavenge(&ptr->restriction_vector);
+
+    return sizeof(struct lim_class);
+}
+
+static obj_t trans_limclass(obj_t limclass)
+{
+    return transport(limclass, sizeof(struct lim_class), true);
+}
+
+static bool compare_limitations(obj_t limclass, obj_t oclass, obj_t restriction_vector)
+{  
+    size_t class_idx, new_idx;
+    if (LIMCLASSOF(limclass) != CLASS(oclass))
+        return false;
+    if (SOVEC(LIMCLASS(limclass)->restriction_vector)->length !=
+        SOVEC(restriction_vector)->length)
+        return false;
+
+    for (new_idx = 0; new_idx < SOVEC(restriction_vector)->length; new_idx += 2)
+    {
+        bool found_key = false;
+        obj_t new_key = SOVEC(restriction_vector)->contents[new_idx],
+         new_value = SOVEC(restriction_vector)->contents[new_idx+1];
+        
+        for (class_idx = 0; class_idx < SOVEC(LIMCLASS(limclass)->restriction_vector)->length; class_idx += 2)
+        {
+            obj_t class_key = SOVEC(LIMCLASS(limclass)->restriction_vector)->contents[class_idx],
+              class_value = SOVEC(LIMCLASS(limclass)->restriction_vector)->contents[class_idx+1];
+            if (class_key == new_key)
+            {
+                obj_t equal_values = invoke_simple_method(NULL, var_EqualsMethod->value,
+                                                          list2(class_value, new_value));
+                if (SOVEC(equal_values)->contents[0] != obj_True)
+                    return false;
+                found_key = true;
+            }
+        }
+        
+        if (! found_key)
+            return false;
+    }
+
+    return true;
+}
+
+static obj_t find_limclass(obj_t class, obj_t restriction_vector)
+{
+    unsigned class_hash = sym_hash(CLASS(class)->debug_name);
+    obj_t next_limclass = limited_classes[class_hash % LIM_CLASS_TABLE_SIZE];
+    while(next_limclass && next_limclass != obj_Nil)
+    {
+        if (compare_limitations(next_limclass, class, restriction_vector))
+            return next_limclass;
+        next_limclass = LIMCLASS(next_limclass)->next;
+    }
+    return obj_Nil;
+}
+
+static obj_t dylan_limited_class(obj_t class, obj_t rest_vector)
+{
+    obj_t res = find_limclass(class, rest_vector);
+
+    if (res == obj_Nil)
+    {
+        res = alloc(obj_LimClassClass, sizeof(struct lim_class));
+        LIMCLASS(res)->type_id = id_LimClass;
+        LIMCLASS(res)->base_class = class;
+        LIMCLASS(res)->restriction_vector = rest_vector;
+        LIMCLASS(res)->next = obj_Nil;
+
+        unsigned class_hash = sym_hash(CLASS(class)->debug_name);
+        if (limited_classes[class_hash % LIM_CLASS_TABLE_SIZE])
+        {
+            obj_t limclass = limited_classes[class_hash % LIM_CLASS_TABLE_SIZE];
+            while (LIMCLASS(limclass)->next != obj_Nil) limclass = LIMCLASS(limclass)->next;
+            LIMCLASS(limclass)->next = res;
+        }
+        else
+            limited_classes[class_hash % LIM_CLASS_TABLE_SIZE] = res;
+    }
+    
+    return res;
+}
+
+static obj_t dylan_type_limitations(obj_t limclass)
+{
+    if (object_class(limclass) == obj_LimClassClass)
+    {
+        format("type-limitations(%= :: <limited-class>)\n", limclass);
+        int size = SOVEC(LIMCLASS(limclass)->restriction_vector)->length / 2, i;
+        obj_t result = make_vector(size, NULL);
+
+        for (i = 0; i < size; i++)
+        {
+            SOVEC(result)->contents[i] =
+                pair(SOVEC(LIMCLASS(limclass)->restriction_vector)->contents[i*2],
+                     SOVEC(LIMCLASS(limclass)->restriction_vector)->contents[i*2+1]);
+        }
+        return result;
+    } else if (instancep(limclass, obj_TypeClass)) {
+        format("type-limitations(%= :: <type>)\n", limclass);
+        return obj_Nil;
+    } else {
+        format("type-limitations(%= :: <object>)\n", limclass);
+        return dylan_type_limitations(object_class(limclass));
+    }
+}
+
 static obj_t dylan_subclass(obj_t subclass_of)
 {
     check_type(subclass_of, obj_ClassClass);
     return subclass(subclass_of);
+}
+
+static obj_t dylan_sublimclass(obj_t subclass_of)
+{
+    check_type(subclass_of, obj_LimClassClass);
+    return sublimclass(subclass_of);
 }
 
 static obj_t dylan_make_singleton(obj_t class, obj_t object)
@@ -1132,7 +1377,6 @@ static obj_t dylan_make_singleton(obj_t class, obj_t object)
     return singleton(object);
 }
 
-
 /* Introspection stuff. */
 
 static obj_t dylan_singleton_object(obj_t singleton)
@@ -1275,6 +1519,7 @@ void make_type_classes(void)
     obj_SingletonClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_SubclassClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_LimIntClass = make_builtin_class(scav_limint, trans_limint);
+    obj_LimClassClass = make_builtin_class(scav_limclass, trans_limclass);
     obj_UnionClass = make_builtin_class(scav_simp_type, trans_simp_type);
     obj_NoneOfClass = make_builtin_class(scav_noneof, trans_noneof);
 
@@ -1282,6 +1527,7 @@ void make_type_classes(void)
     add_constant_root(&obj_SingletonClass);
     add_constant_root(&obj_SubclassClass);
     add_constant_root(&obj_LimIntClass);
+    add_constant_root(&obj_LimClassClass);
     add_constant_root(&obj_UnionClass);
     add_constant_root(&obj_NoneOfClass);
 }
@@ -1295,7 +1541,10 @@ void init_type_classes(void)
     def_printer(obj_SubclassClass, print_subclass);
     init_builtin_class(obj_LimIntClass, "<limited-integer>",
                        obj_TypeClass, NULL);
+    init_builtin_class(obj_LimClassClass, "<limited-class>",
+                       obj_TypeClass, NULL);
     def_printer(obj_LimIntClass, print_limint);
+    def_printer(obj_LimClassClass, print_limclass);
     init_builtin_class(obj_UnionClass, "<union>", obj_TypeClass, NULL);
     def_printer(obj_UnionClass, print_union);
     init_builtin_class(obj_NoneOfClass, "<none-of>", obj_TypeClass, NULL);
@@ -1315,7 +1564,15 @@ void init_type_functions(void)
                   obj_TypeClass, dylan_make_singleton);
     define_function("binary-type-union", list2(obj_TypeClass, obj_TypeClass),
                     false,
-                    obj_Nil, false, obj_TypeClass, type_union);
+                    obj_False, false, obj_TypeClass, type_union);
+
+    /* obj_t obj_LimitableClass = restrict_type(obj_IntegerClass, obj_ClassClass); */
+    /* obj_LimitableClass = restrict_type(obj_FixnumClass, obj_LimitableClass); */
+    /* obj_LimitableClass = restrict_type(obj_BignumClass, obj_LimitableClass); */
+    
+    define_generic_function("limited", list1(obj_ClassClass), false,
+                            obj_Nil, true, list1(obj_TypeClass),
+                            obj_False);
     define_method("limited", list1(singleton(obj_IntegerClass)), false,
                   list2(pair(symbol("min"), obj_False),
                         pair(symbol("max"), obj_False)),
@@ -1328,9 +1585,19 @@ void init_type_functions(void)
                   list2(pair(symbol("min"), obj_False),
                         pair(symbol("max"), obj_False)),
                   false, obj_TypeClass, dylan_limited_bignum);
+    define_method("limited", list1(obj_ClassClass), true,
+                  obj_Nil, true, obj_TypeClass, dylan_limited_class);
+    define_generic_function("limited-instance?", list2(obj_ObjectClass, obj_TypeClass), false,
+                            obj_False, false, list1(obj_BooleanClass), obj_False);
+    define_generic_function("limited-subtype?", list2(obj_TypeClass, obj_TypeClass), false,
+                            obj_False, false, list1(obj_BooleanClass), obj_False);
+    define_method("type-limitations", list1(obj_ObjectClass), false, obj_False, false,
+                  obj_SimpleVectorClass, dylan_type_limitations);
 
     define_method("subclass", list1(obj_ClassClass), false,
                   obj_False, false, obj_TypeClass, dylan_subclass);
+    define_method("subclass", list1(obj_LimClassClass), false,
+                  obj_False, false, obj_TypeClass, dylan_sublimclass);
 
     define_function("singleton-object", list1(obj_SingletonClass), false,
                     obj_False, false, obj_ObjectClass, dylan_singleton_object);
@@ -1351,4 +1618,10 @@ void init_type_functions(void)
                     false, obj_ListClass, dylan_union_members);
 
     define_constant("<never-returns>", make_union(obj_Nil));
+
+    var_EqualsMethod = find_variable(module_BuiltinStuff, symbol("="), false, true);
+    var_LimInstanceMethod = find_variable(module_BuiltinStuff, symbol("limited-instance?"),
+                                          false, true);
+    var_LimSubtypeMethod = find_variable(module_BuiltinStuff, symbol("limited-subtype?"),
+                                         false, true);
 }

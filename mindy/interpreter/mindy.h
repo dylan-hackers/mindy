@@ -56,7 +56,8 @@ enum type_Id {
     id_LimFixnum,
     id_LimBignum,
     id_Union,
-    id_NoneOf
+    id_NoneOf,
+    id_LimClass
 };
 
 extern MINDY_NORETURN void lose(const char *fmt, ...) MINDY_FORMATLIKE(1, 2);
