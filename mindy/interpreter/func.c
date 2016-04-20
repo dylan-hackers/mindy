@@ -50,6 +50,8 @@
 #include "coll.h"
 #include "func.h"
 
+#include "setjmp.h"
+
 obj_t obj_FunctionClass = NULL;
 static obj_t obj_RawFunctionClass = NULL;
 obj_t obj_MethodClass = NULL;
@@ -2202,4 +2204,59 @@ void init_func_functions(void)
                         obj_ObjectClass, obj_ListClass),
                   true, obj_False, false, obj_ObjectClass,
                   constrain_c_function);
+}
+
+static void invoke_simple_method_return(struct thread *thread, obj_t *vals)
+{
+    jmp_buf *buf;
+    size_t number_of_retvals = thread->sp - vals;
+
+    thread->sp = vals; // Remove return values from stack.
+    obj_t return_vector = make_vector(number_of_retvals, thread->sp);
+    thread->sp[0] = return_vector;
+    
+    buf = (jmp_buf*)(thread->sp[-1]);
+    
+    _longjmp(*buf, 1);
+}
+
+// This only works for functions without #rest.
+obj_t invoke_simple_method(struct thread *thread, obj_t method, obj_t arg_list)
+{
+    jmp_buf buf;
+    if (! instancep(arg_list, obj_ListClass))
+        lose("Argument list is not a list.");
+    if (thread == NULL)
+        thread = thread_current();
+    
+    push_linkage(thread, NULL);
+    *thread->sp++ = (obj_t)&buf;
+    
+    int argc = 0;
+    *thread->sp++ = method;
+    for (; arg_list != obj_Nil; arg_list = TAIL(arg_list))
+    {
+        *thread->sp++ = HEAD(arg_list);
+        argc++;
+    }
+    set_c_continuation(thread, invoke_simple_method_return);
+    void *stack = preserve_stack();
+        
+    if (_setjmp(buf) == 0)
+    {
+        invoke(thread, argc);
+    }
+    else
+    {
+        // Return from longjmp.
+        release_stack(stack);
+        obj_t retvals = thread->sp[0];
+        thread->sp--; // Remove jmp_buf* from stack
+        pop_linkage(thread);
+        return retvals;
+    }
+    int *die = NULL;
+    *die = 10;
+    lose("Should never reach this point.");
+    return obj_Nil;
 }

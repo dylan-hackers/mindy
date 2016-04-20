@@ -106,3 +106,5 @@ extern obj_t function_keywords(obj_t func);
 extern bool function_all_keywords_p(obj_t func);
 
 extern obj_t function_specializers(obj_t method);
+
+extern obj_t invoke_simple_method(struct thread *thread, obj_t method, obj_t arg_list);
