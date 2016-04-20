@@ -52,3 +52,6 @@ extern void unblock_signal_handler(int sig);
 extern void set_interrupt_handler(void (*handler)(void));
 extern void clear_interrupt_handler(void);
 extern void unblock_interrupt_handler(void);
+
+void release_stack(void *stack);
+void* preserve_stack();

@@ -43,6 +43,7 @@
 #include "driver.h"
 #include "bool.h"
 #include "gc.h"
+#include "debug.h"
 #ifdef MINDY_SLOW_FUNCTION_POINTERS
 #   include "interp.h"
 #endif
@@ -54,7 +55,7 @@
 #endif
 
 static bool InInterpreter = false;
-static jmp_buf Catcher;
+static jmp_buf* Catcher;
 static enum pause_reason PauseReason;
 
 #define OPS_PER_TIME_SLICE 100
@@ -300,7 +301,7 @@ enum pause_reason do_stuff(void)
             timer = OPS_PER_TIME_SLICE;
             InInterpreter = true;
             set_interrupt_handler(set_pause_interrupted);
-            _setjmp(Catcher);
+            _setjmp(*Catcher);
             if (PauseReason == pause_NoReason)
                 while (timer-- > 0) {
 #ifdef MINDY_SLOW_FUNCTION_POINTERS
@@ -343,7 +344,7 @@ enum pause_reason single_step(struct thread *thread)
     InInterpreter = true;
     PauseReason = pause_NoReason;
     set_interrupt_handler(set_pause_interrupted);
-    if (_setjmp(Catcher) == 0) {
+    if (_setjmp(*Catcher) == 0) {
 #ifdef MINDY_SLOW_FUNCTION_POINTERS
         if (thread->advance)
             thread->advance(thread);
@@ -363,7 +364,21 @@ enum pause_reason single_step(struct thread *thread)
 void go_on(void)
 {
     assert(InInterpreter);
-    _longjmp(Catcher, 1);
+    if (Catcher)
+    {
+        _longjmp(*Catcher, 1);
+    } else {
+        Catcher = malloc(sizeof(jmp_buf));
+        InInterpreter = false;
+        clear_interrupt_handler();
+        if (TimeToGC)
+            collect_garbage(false);
+        while (1) {
+            enum pause_reason reason = do_stuff();
+            if (reason != pause_NothingToRun)
+                invoke_debugger(reason);
+        }
+    }
 }
 
 void mindy_pause(enum pause_reason reason)
@@ -374,6 +389,19 @@ void mindy_pause(enum pause_reason reason)
     go_on();
 }
 
+void* preserve_stack()
+{
+    jmp_buf *rv = Catcher;
+    Catcher = NULL;
+    return rv;
+}
+
+void release_stack(void *stack)
+{
+    free(Catcher);
+    Catcher = (jmp_buf*)stack;
+}
+    
 
 /* GC stuff. */
 
@@ -408,5 +436,6 @@ void init_driver()
     init_waiters(&Readers);
     init_waiters(&Writers);
     NumFds = 0;
+    Catcher = malloc(sizeof(jmp_buf));
     set_interrupt_handler(NULL);
 }
