@@ -1,15 +1,8 @@
 mindy
 =====
 
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at https://gitter.im/project-mindy/mindy
-   :target: https://gitter.im/project-mindy/mindy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-
-.. image:: https://travis-ci.org/project-mindy/mindy.svg?branch=master
-    :target: https://travis-ci.org/project-mindy/mindy
-
-.. image:: https://circleci.com/gh/project-mindy/mindy.svg?style=svg
-    :target: https://circleci.com/gh/project-mindy/mindy
+.. image:: https://travis-ci.org/dylan-hackers/mindy.svg?branch=master
+   :target: https://travis-ci.org/dylan-hackers/mindy
 
 Mindy is an implementation of a language that is very much like the
 language described in the `Dylan Reference Manual`_ (DRM). Mindy was
