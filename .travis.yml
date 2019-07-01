@@ -32,7 +32,7 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake .. -G "Ninja" -DMINDY_BUILD_DOCS=ON
+  - cmake .. -G "Ninja" -DMINDY_BUILD_DOCS=OFF
   - ninja
   - ninja test
 
