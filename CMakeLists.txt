@@ -1,5 +1,5 @@
 PROJECT(mindy C)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
 
 # This needs to be in the root CMakeLists.txt.
 ENABLE_TESTING()
